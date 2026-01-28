@@ -33,4 +33,7 @@ class BanditBuilder:
 
     def pull_arm(self, arm):
         arm = self.bandit_arr[arm]
-        return self.rng.gauss(arm["mean"], arm["sigma"])
+        if self.rng.random() < arm["prob"]:
+            return arm["value"]
+        else:
+            return 0
