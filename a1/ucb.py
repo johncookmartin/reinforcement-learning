@@ -17,8 +17,8 @@ def main():
     bandit = BanditBuilder(args.num_bandits, args.seed)
     for i in range(args.num_bandits):
         print(f"arm {i}")
-        print(f"value: {bandit.bandit_arr[i]["value"]}")
-        print(f"prob: {bandit.bandit_arr[i]["prob"]}")
+        print(f"value: {bandit.bandit_arr[i]['value']}")
+        print(f"prob: {bandit.bandit_arr[i]['prob']}")
         print(f"expected_value: {bandit.get_expected_value(i)}")
 
     print(f"optimal_arm: {bandit.get_optimal_action()}")
