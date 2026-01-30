@@ -112,7 +112,7 @@ class UCBBanditPuller:
 
 def main(args):
 
-    for i in range(args.num_times):
+    for i in range(args.num_trials):
         print()
         print()
         print(f"TRIAL {i+1}")
@@ -143,7 +143,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="UCB Algorithm Implementaion")
     parser.add_argument("--num_arms", type=int, default=10)
     parser.add_argument("--num_rounds", type=int, default=5000)
-    parser.add_argument("--num_times", type=int, default=100)
+    parser.add_argument("--num_trials", type=int, default=100)
     parser.add_argument("--seed", type=int, default=None)
     parser.add_argument("--confidence_rate", type=float, default=10)
 
