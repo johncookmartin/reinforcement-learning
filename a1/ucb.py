@@ -11,7 +11,7 @@ import random
 def calculate_running_average(prev_average, new_reward, total_attempts):
     return prev_average + (1 / max(total_attempts, 1)) * (new_reward - prev_average)
 
-
+# because we are in computer science, we just have log0 return 1
 def cs_log(num):
     if num == 0:
         return 1
