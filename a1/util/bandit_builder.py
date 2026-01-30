@@ -2,13 +2,13 @@ import random
 
 
 class BanditBuilder:
-    def __init__(self, num_bandits, seed=None):
+    def __init__(self, num_arms, seed=None):
         self.rng = random.Random(seed) if seed else random.Random()
 
         self.bandit_arr = []
         self.optimal_action = None
         self.optimal_action_value = None
-        for i in range(num_bandits):
+        for i in range(num_arms):
             self.bandit_arr.append(self.create_arm())
             expected_value = self.get_expected_value(i)
             if (
