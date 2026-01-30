@@ -101,9 +101,9 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="UCB Algorithm Implementaion")
     parser.add_argument("--num_arms", type=int, default=10)
     parser.add_argument("--num_rounds", type=int, default=5000)
-    parser.add_argument("--num_times", type=int, default=10)
+    parser.add_argument("--num_times", type=int, default=100)
     parser.add_argument("--seed", type=int, default=None)
-    parser.add_argument("--confidence_rate", type=float, default=0.01)
+    parser.add_argument("--confidence_rate", type=float, default=10)
 
     args = parser.parse_args()
     main(args)
