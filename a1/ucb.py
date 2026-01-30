@@ -2,11 +2,12 @@
 
 import math
 import argparse
+import random
 
 # import matplotlib.pyplot as plt
-from util.bandit_builder import BanditBuilder
 
 
+############### UTIL FUNCTIONS #################
 def calculate_running_average(prev_average, new_reward, total_attempts):
     return prev_average + (1 / max(total_attempts, 1)) * (new_reward - prev_average)
 
@@ -20,6 +21,47 @@ def cs_log(num):
 def debug_print(str):
     # print(str)
     return
+
+
+############# END UTIL FUNCTIONS ################
+
+
+class BanditBuilder:
+    def __init__(self, num_arms, seed=None):
+        self.rng = random.Random(seed) if seed else random.Random()
+
+        self.bandit_arr = []
+        self.optimal_action = None
+        self.optimal_action_value = None
+        for i in range(num_arms):
+            self.bandit_arr.append(self.create_arm())
+            expected_value = self.get_expected_value(i)
+            if (
+                self.optimal_action_value is None
+                or self.optimal_action_value < expected_value
+            ):
+                self.optimal_action = i
+                self.optimal_action_value = expected_value
+
+    def create_arm(self):
+        value = self.rng.randint(1, 10)
+        prob = self.rng.random()
+        return {"value": value, "prob": prob}
+
+    def get_expected_value(self, arm):
+        value = self.bandit_arr[arm]["value"]
+        prob = self.bandit_arr[arm]["prob"]
+        return value * prob
+
+    def get_optimal_action(self):
+        return self.optimal_action
+
+    def pull_arm(self, arm):
+        arm = self.bandit_arr[arm]
+        if self.rng.random() < arm["prob"]:
+            return arm["value"]
+        else:
+            return 0
 
 
 class UCBBanditPuller:
@@ -71,6 +113,8 @@ class UCBBanditPuller:
 def main(args):
 
     for i in range(args.num_times):
+        print()
+        print()
         print(f"TRIAL {i+1}")
         bandit = BanditBuilder(args.num_arms, args.seed)
         puller = UCBBanditPuller(args.num_arms, args.confidence_rate)
@@ -90,8 +134,6 @@ def main(args):
         print(
             f"Optimal Expected Value: {bandit.get_expected_value(bandit.get_optimal_action())}"
         )
-        print()
-        print()
 
         # plt.plot(record)
         # plt.show()
