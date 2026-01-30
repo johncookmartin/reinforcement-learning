@@ -4,12 +4,13 @@ import math
 import argparse
 import random
 
-# import matplotlib.pyplot as plt
+import matplotlib.pyplot as plt
 
 
 ############### UTIL FUNCTIONS #################
 def calculate_running_average(prev_average, new_reward, total_attempts):
     return prev_average + (1 / max(total_attempts, 1)) * (new_reward - prev_average)
+
 
 # because we are in computer science, we just have log0 return 1
 def cs_log(num):
@@ -120,6 +121,7 @@ def main(args):
         puller = UCBBanditPuller(args.num_arms, args.confidence_rate)
 
         record = []
+        optimal_record = []
         for j in range(0, args.num_rounds + 1):
             debug_print(puller.actions)
             picked_arm = puller.choose_action()
@@ -128,6 +130,9 @@ def main(args):
             puller.log_action(picked_arm, value)
 
             record.append(puller.average_reward)
+            optimal_record.append(
+                bandit.get_expected_value(bandit.get_optimal_action())
+            )
             if j % 100 == 0:
                 print(f"average reward at round {j}: {puller.average_reward}")
 
@@ -135,8 +140,10 @@ def main(args):
             f"Optimal Expected Value: {bandit.get_expected_value(bandit.get_optimal_action())}"
         )
 
-        # plt.plot(record)
-        # plt.show()
+        plt.plot(optimal_record, label="optimal")
+        plt.plot(record, label="puller record")
+        plt.legend()
+        plt.show()
 
 
 if __name__ == "__main__":
