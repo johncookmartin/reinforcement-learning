@@ -3,7 +3,7 @@
 import math
 import argparse
 from util.bandit_builder import BanditBuilder
-from util.functions import calculate_running_average, cs_log, debug_print, plot_results
+from util.functions import calculate_running_average, cs_log, plot_results
 
 
 class UCBBanditPuller:
@@ -32,8 +32,6 @@ class UCBBanditPuller:
             math.sqrt(cs_log(self.total_pulls) / max(times_pulled, 1))
             * self.confidence_rate
         )
-        debug_print(f"potential of bandit {action} is {potential}")
-        debug_print(f"observed_reward is {observed_reward}")
         return observed_reward + potential
 
     def log_action(self, action, reward):
@@ -61,32 +59,36 @@ def main(args):
         bandit = BanditBuilder(args.num_arms, args.seed)
         puller = UCBBanditPuller(args.num_arms, args.confidence_rate)
 
+        optimal_value = bandit.get_expected_value(bandit.get_optimal_action())
+
         record = []
         optimal_record = []
+        optimal_choices = 0
         for j in range(0, args.num_rounds + 1):
-            debug_print(puller.actions)
             picked_arm = puller.choose_action()
-            debug_print(f"I picked arm {picked_arm}")
             value = bandit.pull_arm(picked_arm)
             puller.log_action(picked_arm, value)
 
             record.append(puller.average_reward)
-            optimal_record.append(
-                bandit.get_expected_value(bandit.get_optimal_action())
-            )
+            optimal_record.append(optimal_value)
+            if picked_arm == bandit.get_optimal_action():
+                optimal_choices += 1
+
             if j % 100 == 0:
+                print(f"optimal arm pulled {optimal_choices} times")
                 print(f"average reward at round {j}: {puller.average_reward}")
 
         print(
             f"Optimal Expected Value: {bandit.get_expected_value(bandit.get_optimal_action())}"
         )
 
-        plot_results(
-            [
-                {"record": optimal_record, "label": "optimal"},
-                {"record": record, "label": "puller record"},
-            ]
-        )
+        if args.show_plot:
+            plot_results(
+                [
+                    {"record": optimal_record, "label": "optimal"},
+                    {"record": record, "label": "puller record"},
+                ]
+            )
 
 
 if __name__ == "__main__":
@@ -96,6 +98,8 @@ if __name__ == "__main__":
     parser.add_argument("--num_trials", type=int, default=100)
     parser.add_argument("--seed", type=int, default=None)
     parser.add_argument("--confidence_rate", type=float, default=10)
+    parser.add_argument("--show_plot", action="store_true")
+    parser.add_argument("--debug", action="store_true")
 
     args = parser.parse_args()
     main(args)
