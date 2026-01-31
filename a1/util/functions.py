@@ -25,6 +25,7 @@ def debug_print(str, debug=False):
     return
 
 
+# this will never run on moon
 def plot_results(data):
     if MATPLOTLIB_AVAILABLE:
         for point in data:
