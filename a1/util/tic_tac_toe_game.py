@@ -10,7 +10,7 @@
 #
 #    The bit array corresponds to the
 #    squares like this:
-#    0b123456789
+#    0b987654321
 #
 #    1 represents a move taken by x or o
 #    depending on the array
