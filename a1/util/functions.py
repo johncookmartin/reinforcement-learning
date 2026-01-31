@@ -34,3 +34,8 @@ def plot_results(data):
             plt.plot(record, label=label)
         plt.legend()
         plt.show()
+
+
+def as_9bit(x):
+    mask = 0b111111111
+    return x & mask

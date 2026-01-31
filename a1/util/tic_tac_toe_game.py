@@ -1,3 +1,6 @@
+import random
+from enum import Enum
+
 # represent the game with 9 bits
 #
 #    For example, if the board is numbered:
@@ -29,6 +32,13 @@
 #
 
 
+class OpponentType(Enum):
+    RANDOM = 0
+    RANDOM_ROW = 1
+    RANDOM_COL = 2
+    RANDOM_DIAG = 3
+
+
 class TicTacToeGame:
     def __init__(self):
         self.x_moves = 0b000000000
@@ -56,3 +66,28 @@ class TicTacToeGame:
             self.x_moves = self.x_moves | (1 << move)
         else:
             self.o_moves = self.o_moves | (1 << move)
+
+
+class TicTacToeOpponent:
+    def __init__(self, opponent_type, game, seed=None):
+        self.rng = random.Random(seed) if seed else random.Random()
+        self.opponent_type = opponent_type
+        self.game = game
+
+    def make_move(self, prev_move):
+        if self.opponent_type == OpponentType.RANDOM_ROW:
+            self.make_row_move(prev_move)
+        elif self.opponent_type == OpponentType.RANDOM_COL:
+            pass
+        elif self.opponent_type == OpponentType.RANDOM_DIAG:
+            pass
+        else:
+            pass
+
+    def make_row_move(self, prev_move):
+        if prev_move < 4:
+            pass
+        elif prev_move < 7:
+            pass
+        else:
+            pass
