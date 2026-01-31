@@ -5,15 +5,15 @@ from enum import Enum
 #
 #    For example, if the board is numbered:
 #
-#    1 | 2 | 3
+#    0 | 1 | 2
 #    ---------
-#    4 | 5 | 6
+#    3 | 4 | 5
 #    ---------
-#    7 | 8 | 9
+#    6 | 7 | 8
 #
 #    The bit array corresponds to the
 #    squares like this:
-#    0b123456789
+#    0b876543210
 #
 #    1 represents a move taken by x or o
 #    depending on the array
