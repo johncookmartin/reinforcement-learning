@@ -2,67 +2,14 @@
 
 import argparse
 import random
-
-import matplotlib.pyplot as plt
-
-
-############### UTIL FUNCTIONS #################
-def calculate_running_average(prev_average, new_reward, total_attempts):
-    return prev_average + (1 / max(total_attempts, 1)) * (new_reward - prev_average)
-
-
-def debug_print(str):
-    # print(str)
-    return
-
-
-############## END UTIL FUNCTIONS #############
-
-
-class BanditBuilder:
-    def __init__(self, num_arms, seed=None, value_is_one=True):
-        self.rng = random.Random(seed) if seed else random.Random()
-
-        self.bandit_arr = []
-        self.optimal_action = None
-        self.optimal_action_value = None
-        self.value_is_one = value_is_one
-        for i in range(num_arms):
-            self.bandit_arr.append(self.create_arm())
-            expected_value = self.get_expected_value(i)
-            if (
-                self.optimal_action_value is None
-                or self.optimal_action_value < expected_value
-            ):
-                self.optimal_action = i
-                self.optimal_action_value = expected_value
-
-    def create_arm(self):
-        value = 1 if self.value_is_one else self.rng.randint(1, 10)
-        prob = self.rng.random()
-        return {"value": value, "prob": prob}
-
-    def get_expected_value(self, arm):
-        value = self.bandit_arr[arm]["value"]
-        prob = self.bandit_arr[arm]["prob"]
-        return value * prob
-
-    def get_optimal_action(self):
-        return self.optimal_action
-
-    def get_optimal_prob(self):
-        return self.optimal_prob
-
-    def pull_arm(self, arm):
-        arm = self.bandit_arr[arm]
-        if self.rng.random() < arm["prob"]:
-            return arm["value"]
-        else:
-            return 0
+from util.bandit_builder import BanditBuilder
+from util.functions import calculate_running_average, plot_results
 
 
 class LinearRewardBanditPuller:
-    def __init__(self, num_actions, reward_rate, penalty_rate):
+    def __init__(self, num_actions, reward_rate, penalty_rate, seed=None):
+        self.rng = random.Random(seed) if seed else random.Random()
+
         self.num_actions = num_actions
         self.actions = [1 / num_actions for _ in range(num_actions)]
         self.reward_rate = reward_rate
@@ -71,13 +18,13 @@ class LinearRewardBanditPuller:
         self.average_reward = 0
 
     def choose_action(self):
-        best_action = 0
-        highest_probability = 0
+        choice = self.rng.random()
+        current = 0
         for i in range(self.num_actions):
-            if self.actions[i] > highest_probability:
-                highest_probability = self.actions[i]
-                best_action = i
-        return best_action
+            current += self.actions[i]
+            if current > choice:
+                return i
+        return i
 
     def log_action(self, action, reward):
         self.total_pulls += 1
@@ -120,10 +67,20 @@ def main(args):
         print()
         print(f"TRIAL {i+1}")
         bandit = BanditBuilder(args.num_arms, args.seed)
-        inaction_puller = LinearRewardBanditPuller(args.num_arms, args.reward_rate, 0)
-        penalty_puller = LinearRewardBanditPuller(
-            args.num_arms, args.reward_rate, args.penalty_rate
+
+        # we want the pullers to have the same random seed
+        if args.seed is None:
+            args.seed = int(random.Random().random() * 100)
+
+        inaction_puller = LinearRewardBanditPuller(
+            args.num_arms, args.reward_rate, 0, args.seed
         )
+        penalty_puller = LinearRewardBanditPuller(
+            args.num_arms, args.reward_rate, args.penalty_rate, args.seed
+        )
+
+        print(inaction_puller.actions)
+        print(penalty_puller.actions)
 
         optimal_record = []
         inaction_record = []
@@ -140,7 +97,9 @@ def main(args):
 
             inaction_record.append(inaction_puller.average_reward)
             penalty_record.append(penalty_puller.average_reward)
-            optimal_record.append(bandit.get_optimal_action())
+            optimal_record.append(
+                bandit.get_expected_value(bandit.get_optimal_action())
+            )
 
             if j % 100 == 0:
                 print(
@@ -153,12 +112,13 @@ def main(args):
             f"Optimal Expected Value: {bandit.get_expected_value(bandit.get_optimal_action())}"
         )
 
-        plt.plot(optimal_record, label="optimal")
-        plt.plot(inaction_record, label="reward-inaction")
-        plt.plot(penalty_record, label="reward-penalty")
-
-        plt.legend()
-        plt.show()
+        plot_results(
+            [
+                {"record": optimal_record, "label": "optimal"},
+                {"record": inaction_record, "label": "reward-inaction"},
+                {"record": penalty_record, "label": "reward-panalty"},
+            ]
+        )
 
 
 if __name__ == "__main__":
@@ -167,8 +127,8 @@ if __name__ == "__main__":
     parser.add_argument("--num_rounds", type=int, default=5000)
     parser.add_argument("--num_trials", type=int, default=100)
     parser.add_argument("--seed", type=int, default=None)
-    parser.add_argument("--reward_rate", type=float, default=0.9)
-    parser.add_argument("--penalty_rate", type=float, default=0.9)
+    parser.add_argument("--reward_rate", type=float, default=0.01)
+    parser.add_argument("--penalty_rate", type=float, default=0.01)
 
     args = parser.parse_args()
     main(args)

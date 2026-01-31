@@ -33,9 +33,6 @@ class BanditBuilder:
     def get_optimal_action(self):
         return self.optimal_action
 
-    def get_optimal_prob(self):
-        return self.optimal_prob
-
     def pull_arm(self, arm):
         arm = self.bandit_arr[arm]
         if self.rng.random() < arm["prob"]:
