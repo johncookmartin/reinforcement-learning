@@ -79,12 +79,16 @@ def main(args):
             args.num_arms, args.reward_rate, args.penalty_rate, args.seed
         )
 
-        print(inaction_puller.actions)
-        print(penalty_puller.actions)
+        optimal_value = bandit.get_expected_value(bandit.get_optimal_action())
 
         optimal_record = []
+
         inaction_record = []
+        inaction_optimal_choices = 0
+
         penalty_record = []
+        penalty_optimal_choices = 0
+
         for j in range(0, args.num_rounds + 1):
             i_picked_arm = inaction_puller.choose_action()
             p_picked_arm = penalty_puller.choose_action()
@@ -97,13 +101,22 @@ def main(args):
 
             inaction_record.append(inaction_puller.average_reward)
             penalty_record.append(penalty_puller.average_reward)
-            optimal_record.append(
-                bandit.get_expected_value(bandit.get_optimal_action())
-            )
+            optimal_record.append(optimal_value)
+
+            if i_picked_arm == bandit.get_optimal_action():
+                inaction_optimal_choices += 1
+            if p_picked_arm == bandit.get_optimal_action():
+                penalty_optimal_choices += 1
 
             if j % 100 == 0:
                 print(
+                    f"reward-inaction pulled optimal arm {inaction_optimal_choices} times"
+                )
+                print(
                     f"average reward for reward-inaction at round {j}: {inaction_puller.average_reward}"
+                )
+                print(
+                    f"reward-penalty pulled optimal arm {penalty_optimal_choices} times"
                 )
                 print(
                     f"avergage reward for reward-penalty at round {j}: {penalty_puller.average_reward}"
@@ -112,13 +125,14 @@ def main(args):
             f"Optimal Expected Value: {bandit.get_expected_value(bandit.get_optimal_action())}"
         )
 
-        plot_results(
-            [
-                {"record": optimal_record, "label": "optimal"},
-                {"record": inaction_record, "label": "reward-inaction"},
-                {"record": penalty_record, "label": "reward-panalty"},
-            ]
-        )
+        if args.show_plot:
+            plot_results(
+                [
+                    {"record": optimal_record, "label": "optimal"},
+                    {"record": inaction_record, "label": "reward-inaction"},
+                    {"record": penalty_record, "label": "reward-panalty"},
+                ]
+            )
 
 
 if __name__ == "__main__":
@@ -129,6 +143,8 @@ if __name__ == "__main__":
     parser.add_argument("--seed", type=int, default=None)
     parser.add_argument("--reward_rate", type=float, default=0.01)
     parser.add_argument("--penalty_rate", type=float, default=0.01)
+    parser.add_argument("--show_plot", action="store_true")
+    parser.add_argument("--debug", action="store_true")
 
     args = parser.parse_args()
     main(args)
