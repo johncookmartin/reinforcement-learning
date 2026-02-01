@@ -22,6 +22,7 @@ def cs_log(num):
 def debug_print(str, debug=False):
     if debug:
         print(str)
+        input()
     return
 
 
@@ -39,3 +40,8 @@ def plot_results(data):
 def as_9bit(x):
     mask = 0b111111111
     return x & mask
+
+
+def as_9bit_flipped(x):
+    mask = 0b111111111
+    return (~x) & mask
