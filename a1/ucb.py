@@ -16,6 +16,9 @@ class UCBBanditPuller:
         self.confidence_rate = confidence_rate
         self.average_reward = 0
 
+        self.record = []
+        self.pull_record = [0 for _ in range(num_actions)]
+
     def choose_action(self):
         best_action = 0
         best_potential_value = 0
@@ -35,7 +38,7 @@ class UCBBanditPuller:
         )
         return observed_reward + potential
 
-    def log_action(self, action, reward):
+    def log_action(self, action, reward, rank):
         # calculate average reward for specific action
         observed_reward = self.actions[action]["observed_reward"]
         self.actions[action]["observed_reward"] = calculate_running_average(
@@ -47,14 +50,65 @@ class UCBBanditPuller:
         self.average_reward = calculate_running_average(
             self.average_reward, reward, self.total_pulls
         )
+        self.record.append(self.average_reward)
 
+        # add to pulls taken
         self.total_pulls += 1
+        self.pull_record[rank] += 1
+
+
+class DataCalculator:
+    def __init__(self, num_arms, num_rounds):
+        self.num_arms = num_arms
+        self.num_rounds = num_rounds
+
+        self.total_optimal_value_record = []
+        self.total_optimal_pull_record = [[] for _ in range(num_arms)]
+        self.average_pull_values = []
+
+        self.base = 0
+        self.optimal_value = 0
+
+    def start_trial(self, i, optimal_value):
+        self.base = self.num_rounds * i
+        self.optimal_value = optimal_value
+
+    def update_value(self, new_value, turn):
+        normalized_value = new_value / self.optimal_value
+        if len(self.total_optimal_value_record) <= turn:
+            self.total_optimal_value_record.append(normalized_value)
+        else:
+            self.total_optimal_value_record[turn] = calculate_running_average(
+                self.total_optimal_value_record[turn],
+                normalized_value,
+                self.base + turn + 1,
+            )
+
+    def update_pull_record(self, new_pulls, turn):
+        for i in range(len(new_pulls)):
+            normalized_pull = new_pulls[i] / (turn + 1)
+            if len(self.total_optimal_pull_record[i]) <= turn:
+                self.total_optimal_pull_record[i].append(normalized_pull)
+            else:
+                self.total_optimal_pull_record[i][turn] = calculate_running_average(
+                    self.total_optimal_pull_record[i][turn],
+                    normalized_pull,
+                    self.base + turn + 1,
+                )
+
+    def update_average_pull_values(self, pull_values, trial):
+        for i in range(len(pull_values)):
+            if len(self.average_pull_values) <= i:
+                self.average_pull_values.append(pull_values[i])
+            else:
+                self.average_pull_values[i] = calculate_running_average(
+                    self.average_pull_values[i], pull_values[i], trial + 1
+                )
 
 
 def main(args):
 
-    total_optimal_value_record = []
-    total_optimal_pull_record = []
+    data_calculator = DataCalculator(args.num_arms, args.num_rounds)
 
     # want to control the seed but also have a different seed for each trial
     rng = random.Random(args.seed)
@@ -64,67 +118,47 @@ def main(args):
         print()
         print()
         print(f"TRIAL {i+1}")
+
         bandit = BanditBuilder(args.num_arms, init_seed + i, True)
         puller = UCBBanditPuller(args.num_arms, args.confidence_rate)
 
         optimal_value = bandit.get_expected_value(bandit.get_optimal_action())
+        optimal_record = [optimal_value for _ in range(1, args.num_rounds + 1)]
 
-        record = []
-        pull_record = []
-        optimal_record = []
-        optimal_choices = 0
-        for j in range(0, args.num_rounds + 1):
+        data_calculator.start_trial(i, optimal_value)
+        data_calculator.update_average_pull_values(bandit.sorted_values, i)
+
+        for j in range(args.num_rounds):
             picked_arm = puller.choose_action()
-            value = bandit.pull_arm(picked_arm)
-            puller.log_action(picked_arm, value)
+            value, rank = bandit.pull_arm(picked_arm)
+            puller.log_action(picked_arm, value, rank)
 
-            record.append(puller.average_reward)
-            optimal_record.append(optimal_value)
-            if picked_arm == bandit.get_optimal_action():
-                optimal_choices += 1
-            pull_record.append(optimal_choices / (j + 1))
+            data_calculator.update_value(puller.record[j], j)
+            data_calculator.update_pull_record(puller.pull_record, j)
 
-            if j % 100 == 0:
-                print(f"optimal arm pulled {optimal_choices} times")
+            if (j + 1) % 100 == 0:
+                print(f"optimal arm pulled {puller.pull_record[0]} times")
                 print(f"average reward at round {j}: {puller.average_reward}")
 
-            if len(total_optimal_value_record) <= j:
-                total_optimal_value_record.append(record[j])
-            else:
-                total_optimal_value_record[j] = calculate_running_average(
-                    total_optimal_value_record[j],
-                    record[j] / optimal_value,
-                    args.num_rounds * i + j + 1,
-                )
-
-            if len(total_optimal_pull_record) <= j:
-                total_optimal_pull_record.append(pull_record[j])
-            else:
-                total_optimal_pull_record[j] = calculate_running_average(
-                    total_optimal_pull_record[j],
-                    pull_record[j],
-                    args.num_rounds * i + j + 1,
-                )
-
-        print(
-            f"Optimal Expected Value: {bandit.get_expected_value(bandit.get_optimal_action())}"
-        )
+        print(f"Optimal Expected Value: {optimal_value}")
 
         if args.show_plot:
             plot_results(
                 [
                     {"record": optimal_record, "label": "optimal"},
-                    {"record": record, "label": "puller record"},
+                    {"record": puller.record, "label": "puller record"},
                 ]
             )
         if args.show_plot:
-            plot_results([{"record": pull_record, "label": "optimal"}])
+            plot_results([{"record": puller.pull_record, "label": "optimal"}])
 
     plot_results(
         [
-            {"record": total_optimal_value_record, "label": "value"},
+            {"record": data_calculator.total_optimal_value_record, "label": "value"},
             {
-                "record": [1 for _ in range(len(total_optimal_value_record))],
+                "record": [
+                    1 for _ in range(len(data_calculator.total_optimal_value_record))
+                ],
                 "label": "Optimal",
             },
         ],
@@ -132,8 +166,15 @@ def main(args):
         "Round",
         "Optimal Value as Percentage",
     )
+
     plot_results(
-        [{"record": total_optimal_pull_record, "label": "optimal pulls"}],
+        [
+            {
+                "record": data_calculator.total_optimal_pull_record[i],
+                "label": f"choice {i}, average value {data_calculator.average_pull_values[i]}",
+            }
+            for i in range(len(data_calculator.total_optimal_pull_record))
+        ],
         "Normalized Optimal Pulls",
         "Round",
         "Optimal Pull Percentage",
