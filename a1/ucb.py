@@ -2,6 +2,7 @@
 
 import math
 import argparse
+import random
 from util.bandit_builder import BanditBuilder
 from util.functions import calculate_running_average, cs_log, plot_results
 
@@ -52,11 +53,18 @@ class UCBBanditPuller:
 
 def main(args):
 
+    total_optimal_value_record = []
+    total_optimal_pull_record = []
+
+    # want to control the seed but also have a different seed for each trial
+    rng = random.Random(args.seed)
+    init_seed = rng.randint(1, 100)
+
     for i in range(args.num_trials):
         print()
         print()
         print(f"TRIAL {i+1}")
-        bandit = BanditBuilder(args.num_arms, args.seed, True)
+        bandit = BanditBuilder(args.num_arms, init_seed + i, True)
         puller = UCBBanditPuller(args.num_arms, args.confidence_rate)
 
         optimal_value = bandit.get_expected_value(bandit.get_optimal_action())
@@ -80,6 +88,24 @@ def main(args):
                 print(f"optimal arm pulled {optimal_choices} times")
                 print(f"average reward at round {j}: {puller.average_reward}")
 
+            if len(total_optimal_value_record) <= j:
+                total_optimal_value_record.append(record[j])
+            else:
+                total_optimal_value_record[j] = calculate_running_average(
+                    total_optimal_value_record[j],
+                    record[j] / optimal_value,
+                    args.num_rounds * i + j + 1,
+                )
+
+            if len(total_optimal_pull_record) <= j:
+                total_optimal_pull_record.append(pull_record[j])
+            else:
+                total_optimal_pull_record[j] = calculate_running_average(
+                    total_optimal_pull_record[j],
+                    pull_record[j],
+                    args.num_rounds * i + j + 1,
+                )
+
         print(
             f"Optimal Expected Value: {bandit.get_expected_value(bandit.get_optimal_action())}"
         )
@@ -93,6 +119,17 @@ def main(args):
             )
         if args.show_plot:
             plot_results([{"record": pull_record, "label": "optimal"}])
+
+    plot_results(
+        [
+            {"record": total_optimal_value_record, "label": "value"},
+            {
+                "record": [1 for _ in range(len(total_optimal_value_record))],
+                "label": "Optimal",
+            },
+        ]
+    )
+    plot_results([{"record": total_optimal_pull_record, "label": "optimal pulls"}])
 
 
 if __name__ == "__main__":

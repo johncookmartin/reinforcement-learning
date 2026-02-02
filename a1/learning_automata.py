@@ -62,21 +62,26 @@ class LinearRewardBanditPuller:
 
 def main(args):
 
+    # want to control the seed but also have a different see for each trial
+    rng = random.Random(args.seed)
+    init_seed = rng.randint(1, 100)
+
     for i in range(args.num_trials):
         print()
         print()
         print(f"TRIAL {i+1}")
-        bandit = BanditBuilder(args.num_arms, args.seed)
+        trial_seed = init_seed + i
+        bandit = BanditBuilder(args.num_arms, trial_seed)
 
         # we want the pullers to have the same random seed
-        if args.seed is None:
-            args.seed = int(random.Random().random() * 100)
+        if trial_seed is None:
+            trial_seed = int(random.Random().random() * 100)
 
         inaction_puller = LinearRewardBanditPuller(
-            args.num_arms, args.reward_rate, 0, args.seed
+            args.num_arms, args.reward_rate, 0, trial_seed
         )
         penalty_puller = LinearRewardBanditPuller(
-            args.num_arms, args.reward_rate, args.penalty_rate, args.seed
+            args.num_arms, args.reward_rate, args.penalty_rate, trial_seed
         )
 
         optimal_value = bandit.get_expected_value(bandit.get_optimal_action())

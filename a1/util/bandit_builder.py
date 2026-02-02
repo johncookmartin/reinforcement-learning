@@ -3,7 +3,7 @@ import random
 
 class BanditBuilder:
     def __init__(self, num_arms, seed=None, is_binary=True):
-        self.rng = random.Random(seed) if seed else random.Random()
+        self.rng = random.Random(seed)
 
         self.bandit_arr = []
         self.is_binary = is_binary
