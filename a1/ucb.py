@@ -56,12 +56,13 @@ def main(args):
         print()
         print()
         print(f"TRIAL {i+1}")
-        bandit = BanditBuilder(args.num_arms, args.seed)
+        bandit = BanditBuilder(args.num_arms, args.seed, True)
         puller = UCBBanditPuller(args.num_arms, args.confidence_rate)
 
         optimal_value = bandit.get_expected_value(bandit.get_optimal_action())
 
         record = []
+        pull_record = []
         optimal_record = []
         optimal_choices = 0
         for j in range(0, args.num_rounds + 1):
@@ -73,6 +74,7 @@ def main(args):
             optimal_record.append(optimal_value)
             if picked_arm == bandit.get_optimal_action():
                 optimal_choices += 1
+            pull_record.append(optimal_choices / (j + 1))
 
             if j % 100 == 0:
                 print(f"optimal arm pulled {optimal_choices} times")
@@ -89,6 +91,8 @@ def main(args):
                     {"record": record, "label": "puller record"},
                 ]
             )
+        if args.show_plot:
+            plot_results([{"record": pull_record, "label": "optimal"}])
 
 
 if __name__ == "__main__":
@@ -97,7 +101,7 @@ if __name__ == "__main__":
     parser.add_argument("--num_rounds", type=int, default=5000)
     parser.add_argument("--num_trials", type=int, default=100)
     parser.add_argument("--seed", type=int, default=None)
-    parser.add_argument("--confidence_rate", type=float, default=10)
+    parser.add_argument("--confidence_rate", type=float, default=2)
     parser.add_argument("--show_plot", action="store_true")
     parser.add_argument("--debug", action="store_true")
 

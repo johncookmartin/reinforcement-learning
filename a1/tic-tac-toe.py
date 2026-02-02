@@ -4,7 +4,7 @@ import argparse
 from enum import Enum
 import random
 from util.tic_tac_toe_game import TicTacToeGame
-from util.functions import as_9bit
+from util.functions import as_9bit, calculate_running_average
 
 
 class PlayerType(Enum):
@@ -17,13 +17,19 @@ class PlayerType(Enum):
 
 
 class Player:
-    def __init__(self, game, player_type, learning_rate=0.1, seed=None):
+    def __init__(
+        self, game, player_type, learning_rate=0.1, exploring_rate=0.1, seed=None
+    ):
         self.rng = random.Random(seed) if seed else random.Random()
 
         self.player_type = player_type
         self.learning_rate = learning_rate
+        self.exploring_rate = exploring_rate
         self.game = game
         self.states = {}
+        self.prev_state = 0b000000000000000000
+        self.states[self.prev_state] = self.consider_state(0b000000000, 0b0000000000)
+        self.prev_states = self.states
 
     def play_move(self, prev_move=None):
         if self.player_type == PlayerType.PLAYER:
@@ -31,11 +37,12 @@ class Player:
         else:
             move = self.choose_opponent_move(prev_move)
         self.game.play_move(move, self.player_type == PlayerType.PLAYER)
+        self.prev_state = self.get_current_combined_state()
         return move
 
     def choose_player_move(self):
         options = self.game.get_options()
-        if self.rng.random() <= 0.1:
+        if self.rng.random() <= self.exploring_rate:
             return self.choose_random_move(options)
         else:
             return self.choose_optimal_move(options)
@@ -119,17 +126,8 @@ class Player:
                     i -= 1
 
     def get_move_value(self, move):
-        player_state = (
-            self.game.x_moves
-            if self.player_type == PlayerType.PLAYER
-            else self.game.o_moves
-        )
+        player_state, opponent_state = self.get_current_states()
         player_state = player_state | (1 << move)
-        opponent_state = (
-            self.game.o_moves
-            if self.player_type == PlayerType.PLAYER
-            else self.game.x_moves
-        )
         return self.consider_state(player_state, opponent_state)
 
     def consider_state(self, player_state, opponent_state):
@@ -139,57 +137,88 @@ class Player:
         elif self.game.check_is_winning(player_state):
             self.states[state] = 1
             return 1
+        elif self.game.check_is_winning(opponent_state):
+            self.states[state] = 0
+            return 0
         else:
             self.states[state] = 0.5
             return 0.5
 
-    def log_move(self, value):
-        current_state = (as_9bit(self.game.x_moves) << 9) | as_9bit(self.game.o_moves)
-        current_value = self.consider_state(current_state)
-        new_value = current_value + self.learning_rate * (value - current_value)
-        self.states[current_state] = new_value
+    def get_current_states(self):
+        player_state = (
+            as_9bit(self.game.x_moves)
+            if self.player_type == PlayerType.PLAYER
+            else as_9bit(self.game.o_moves)
+        )
+        opponent_state = (
+            as_9bit(self.game.o_moves)
+            if self.player_type == PlayerType.PLAYER
+            else as_9bit(self.game.x_moves)
+        )
+        return player_state, opponent_state
+
+    def get_current_combined_state(self):
+        player_state, opponent_state = self.get_current_states()
+        return (as_9bit(player_state) << 9) | as_9bit(opponent_state)
+
+    def log_value(self):
+        player_state, opponent_state = self.get_current_states()
+        current_value = self.consider_state(player_state, opponent_state)
+        new_value = current_value + self.learning_rate * (
+            self.states[self.prev_state] - current_value
+        )
+        self.states[self.prev_state] = new_value
+
+    def check_state_change(self):
+        average_value_change = 0
+        i = 0
+        for state in self.states:
+            i += 1
+            if state in self.prev_states:
+                value_change = (
+                    (self.states[state] - self.prev_states[state])
+                    / self.prev_states[state]
+                    * 100
+                )
+            else:
+                value_change = self.states[state]
+            average_value_change = calculate_running_average(
+                average_value_change, value_change, i
+            )
+        self.prev_states = self.states
+        return average_value_change
 
 
 def main(args):
     game = TicTacToeGame()
     opponent = Player(game, PlayerType.RANDOM_ROW)
     player = Player(game, PlayerType.PLAYER)
-    keep_playing = True
-    while keep_playing:
-        print("current board:")
-        print(f"{game.get_full_board():09b}")
-        print()
 
-        input()
-        next_move = player.play_move()
-        print("x played:")
-        print(f"{game.x_moves:09b}")
-        print()
-        x_won = game.check_is_winning()
+    average_value_change = 1
+    while average_value_change > 0.001:
+        player_move = player.play_move()
+        player_won = game.check_is_winning()
         is_draw = game.check_is_draw()
-        if not x_won and not is_draw:
-            opponent.play_move(next_move)
-            print("o played:")
-            print(f"{game.o_moves:09b}")
-            print()
-            o_won = game.check_is_winning(False)
-        if x_won or o_won or is_draw:
-            keep_playing = False
+        if not player_won and not is_draw:
+            opponent.play_move(player_move)
+            player.log_value()
+            opponent_won = game.check_is_winning()
+            is_draw = game.check_is_draw()
 
-    print(f"{game.get_full_board():09b}")
-    if x_won:
-        print(f"{game.x_moves:09b}")
-        print("X won!")
-    elif o_won:
-        print(f"{game.o_moves:09b}")
-        print("O Won!")
-    else:
-        print(f"{game.x_moves:09b}")
-        print("Draw")
+        if player_won or opponent_won or is_draw:
+            player.log_value()
+            game.clear_board()
+            average_value_change = player.check_state_change()
+
+    print(player.states)
 
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Tic Tac Toe Implementation")
+    parser.add_argument("--num_rounds", type=int, default=5000)
+    parser.add_argument("--num_trials", type=int, default=100)
+    parser.add_argument("--seed", type=int, default=None)
+    parser.add_argument("--learning_rate", type=float, default=0.1)
     parser.add_argument("--debug", action="store_true")
 
     args = parser.parse_args()

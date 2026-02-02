@@ -74,3 +74,7 @@ class TicTacToeGame:
             self.x_moves |= 1 << move
         else:
             self.o_moves |= 1 << move
+
+    def clear_board(self):
+        self.x_moves = 0b000000000
+        self.o_moves = 0b000000000
