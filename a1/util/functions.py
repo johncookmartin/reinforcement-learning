@@ -27,12 +27,15 @@ def debug_print(str, debug=False):
 
 
 # this will never run on moon
-def plot_results(data):
+def plot_results(data, title, x_label, y_label):
     if MATPLOTLIB_AVAILABLE:
         for point in data:
             label = point.get("label", "")
             record = point.get("record")
             plt.plot(record, label=label)
+        plt.title(title if title else "")
+        plt.xlabel(x_label if x_label else "")
+        plt.ylabel(y_label if y_label else "")
         plt.legend()
         plt.show()
 
