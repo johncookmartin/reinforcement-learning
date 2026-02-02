@@ -62,6 +62,11 @@ class LinearRewardBanditPuller:
 
 def main(args):
 
+    total_inaction_value_record = []
+    total_inaction_pull_record = []
+    total_penalty_value_record = []
+    total_penalty_pull_record = []
+
     # want to control the seed but also have a different see for each trial
     rng = random.Random(args.seed)
     init_seed = rng.randint(1, 100)
@@ -113,6 +118,42 @@ def main(args):
             if p_picked_arm == bandit.get_optimal_action():
                 penalty_optimal_choices += 1
 
+            if len(total_inaction_value_record) <= j:
+                total_inaction_value_record.append(inaction_record[j])
+            else:
+                total_inaction_value_record[j] = calculate_running_average(
+                    total_inaction_value_record[j],
+                    inaction_record[j] / optimal_value,
+                    args.num_rounds * i + j + 1,
+                )
+
+            if len(total_inaction_pull_record) <= j:
+                total_inaction_pull_record.append(inaction_optimal_choices / (j + 1))
+            else:
+                total_inaction_pull_record[j] = calculate_running_average(
+                    total_inaction_pull_record[j],
+                    inaction_optimal_choices / (j + 1),
+                    args.num_rounds * i + j + 1,
+                )
+
+            if len(total_penalty_value_record) <= j:
+                total_penalty_value_record.append(penalty_record[j])
+            else:
+                total_penalty_value_record[j] = calculate_running_average(
+                    total_penalty_value_record[j],
+                    penalty_record[j] / optimal_value,
+                    args.num_rounds * i + j + 1,
+                )
+
+            if len(total_penalty_pull_record) <= j:
+                total_penalty_pull_record.append(penalty_optimal_choices / (j + 1))
+            else:
+                total_penalty_pull_record[j] = calculate_running_average(
+                    total_penalty_pull_record[j],
+                    penalty_optimal_choices / (j + 1),
+                    args.num_rounds * i + j + 1,
+                )
+
             if j % 100 == 0:
                 print(
                     f"reward-inaction pulled optimal arm {inaction_optimal_choices} times"
@@ -138,6 +179,32 @@ def main(args):
                     {"record": penalty_record, "label": "reward-panalty"},
                 ]
             )
+
+    plot_results(
+        [
+            {
+                "record": [1 for _ in range(len(total_inaction_value_record))],
+                "label": "optimal",
+            },
+            {"record": total_inaction_value_record, "label": "reward-inaction"},
+            {"record": total_penalty_value_record, "label": "reward-penalty"},
+        ],
+        "Normalized Optimal Value",
+        "Round",
+        "Optimal Value as Percentage",
+    )
+    plot_results(
+        [
+            {"record": total_inaction_pull_record, "label": "reward-inaction"},
+            {
+                "record": total_penalty_pull_record,
+                "label": "reward-penalty",
+            },
+        ],
+        "Normalized Optimal Pulls",
+        "Round",
+        "Optimal Pull Percentage",
+    )
 
 
 if __name__ == "__main__":

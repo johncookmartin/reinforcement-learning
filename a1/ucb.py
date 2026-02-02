@@ -127,9 +127,17 @@ def main(args):
                 "record": [1 for _ in range(len(total_optimal_value_record))],
                 "label": "Optimal",
             },
-        ]
+        ],
+        "Normalized Optimal Value",
+        "Round",
+        "Optimal Value as Percentage",
     )
-    plot_results([{"record": total_optimal_pull_record, "label": "optimal pulls"}])
+    plot_results(
+        [{"record": total_optimal_pull_record, "label": "optimal pulls"}],
+        "Normalized Optimal Pulls",
+        "Round",
+        "Optimal Pull Percentage",
+    )
 
 
 if __name__ == "__main__":
