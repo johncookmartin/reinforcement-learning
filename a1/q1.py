@@ -1,0 +1,105 @@
+# -*- coding: utf-8 -*-
+"""Q1.ipynb
+
+import random
+import math
+import time
+
+random.seed(time.time())
+
+def make_environment(k=10):
+    q = [random.random() for _ in range(k)]  # numbers in [0, 1)
+
+    optimal_action = max(range(k), key=lambda i: q[i])
+
+    return q, optimal_action
+
+def pull_arm(q, action):
+    return 1 if random.random() < q[action] else 0
+
+
+def choose_action_ucb(Q, N, t, c=2.0):
+    k = len(Q)
+
+    for a in range(k):
+        if N[a] == 0:
+            return a
+
+    ln_t = math.log(t)
+    best_a = 0
+    best_score = -1e18
+
+    for a in range(k):
+        bonus = c * math.sqrt(ln_t / N[a])
+        score = Q[a] + bonus
+        if score > best_score:
+            best_score = score
+            best_a = a
+
+    return best_a
+
+def run_ucb_many_envs(runs=100, k=10, steps=5000, c=2.0):
+    num_checkpoints = steps // 100
+    checkpoints = [(i + 1) * 100 for i in range(num_checkpoints)]
+
+    sum_opt_count = [0] * num_checkpoints
+    sum_avg_reward = [0.0] * num_checkpoints
+
+    for _ in range(runs):
+        q, optimal_action = make_environment(k)
+
+        Q = [0.0] * k
+        N = [0] * k
+        total_reward = 0
+        optimal_count = 0
+
+        cp_idx = 0
+        for t in range(1, steps + 1):
+            action = choose_action_ucb(Q, N, t, c=c)
+            reward = pull_arm(q, action)
+
+            total_reward += reward
+            if action == optimal_action:
+                optimal_count += 1
+
+            N[action] += 1
+            Q[action] = Q[action] + (1.0 / N[action]) * (reward - Q[action])
+
+            if t % 100 == 0:
+                sum_opt_count[cp_idx] += optimal_count
+                sum_avg_reward[cp_idx] += (total_reward / t)
+                cp_idx += 1
+
+    avg_opt_count = [x / runs for x in sum_opt_count]
+    avg_reward = [x / runs for x in sum_avg_reward]
+
+    return checkpoints, avg_opt_count, avg_reward
+
+checkpoints, avg_opt_count, avg_reward = run_ucb_many_envs(
+    runs=100, k=10, steps=5000, c=2.0
+)
+
+import matplotlib.pyplot as plt
+
+avg_opt_percent = [
+    (avg_opt_count[i] / checkpoints[i]) * 100
+    for i in range(len(checkpoints))
+]
+
+# Plot 1: Average reward vs time
+plt.figure()
+plt.plot(checkpoints, avg_reward)
+plt.xlabel("Time step (t)")
+plt.ylabel("Average reward")
+plt.title("UCB: Average Reward vs Time (100 environments)")
+plt.grid(True)
+plt.show()
+
+# Plot 2: Optimal action selection percentage
+plt.figure()
+plt.plot(checkpoints, avg_opt_percent)
+plt.xlabel("Time step (t)")
+plt.ylabel("Optimal action chosen (%)")
+plt.title("UCB: Optimal Action Selection vs Time (100 environments)")
+plt.grid(True)
+plt.show()
