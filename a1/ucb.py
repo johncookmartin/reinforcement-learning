@@ -146,7 +146,7 @@ if __name__ == "__main__":
     parser.add_argument("--num_rounds", type=int, default=5000)
     parser.add_argument("--num_trials", type=int, default=100)
     parser.add_argument("--seed", type=int, default=None)
-    parser.add_argument("--confidence_rate", type=float, default=2)
+    parser.add_argument("--confidence_rate", type=float, default=1)
     parser.add_argument("--show_plot", action="store_true")
     parser.add_argument("--debug", action="store_true")
 
