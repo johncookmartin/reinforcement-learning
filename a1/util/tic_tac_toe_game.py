@@ -1,7 +1,3 @@
-import random
-from enum import Enum
-from util.functions import as_9bit
-
 # represent the game with 9 bits
 #
 #    For example, if the board is numbered:
@@ -42,7 +38,7 @@ class TicTacToeGame:
         if state is None:
             moves = self.x_moves if check_x else self.o_moves
         else:
-            moves = as_9bit(state)
+            moves = state
 
         winning_maps = [
             0b111000000,
@@ -60,11 +56,11 @@ class TicTacToeGame:
         return False
 
     def check_is_draw(self, state=None):
-        moves = self.get_full_board() if state is None else as_9bit(state)
+        moves = self.get_full_board() if state is None else state
         return moves & 0b111111111 == 0b111111111
 
     def get_full_board(self):
-        return as_9bit(self.x_moves ^ self.o_moves)
+        return self.x_moves ^ self.o_moves
 
     def get_options(self, mask=0b111111111):
         return (self.get_full_board() & mask) ^ mask
