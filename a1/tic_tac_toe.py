@@ -4,7 +4,7 @@ import argparse
 from enum import Enum
 import random
 from util.tic_tac_toe_game import TicTacToeGame
-from util.functions import plot_results
+from util.functions import calculate_running_average, plot_results
 
 
 class PlayerType(Enum):
@@ -30,8 +30,10 @@ class Player:
 
         self.states = {}
         self.prev_state = 0
-        self.states[self.prev_state] = self.consider_state(0, 0)
-        # self.prev_states = self.states
+
+        self.total_moves = 0
+        self.average_change_rate = 0
+        self.max_change_rate = 0
 
     def play_move(self, prev_move=None):
         if self.player_type == PlayerType.PLAYER or self.player_type == PlayerType.SELF:
@@ -83,7 +85,7 @@ class Player:
     def choose_optimal_move(self, options):
         i = 0
         best_move = 0
-        best_move_value = 0
+        best_move_value = -1
         for j in range(9):
             bit = (options >> j) & 1
             if bit == 1:
@@ -149,25 +151,32 @@ class Player:
         )
         return player_state, opponent_state
 
+    # def consider_state(self, player_state, opponent_state):
+    #     state = (player_state << 9) | opponent_state
+    #     if state in self.states:
+    #         return self.states[state]["value"]
+    #     elif self.game.check_is_winning(
+    #         self.player_type == PlayerType.PLAYER, player_state
+    #     ):
+    #         self.states[state] = {"value": 1, "change_rate": 0, "changes": 0}
+    #         return 1
+    #     elif self.game.check_is_winning(
+    #         self.player_type != PlayerType.PLAYER, opponent_state
+    #     ):
+    #         self.states[state] = {"value": 0, "change_rate": 0, "changes": 0}
+    #         return 0
+    #     elif self.game.check_is_draw(state):
+    #         self.states[state] = {"value": 0, "change_rate": 0, "changes": 0}
+    #         return 0
+    #     else:
+    #         self.states[state] = {"value": 0.5, "change_rate": 0, "changes": 0}
+    #         return 0.5
+
     def consider_state(self, player_state, opponent_state):
-        state = (player_state << 9) | opponent_state
+        state = (player_state << 9 | opponent_state)
         if state in self.states:
-            return self.states[state]
-        elif self.game.check_is_winning(
-            self.player_type == PlayerType.PLAYER, player_state
-        ):
-            self.states[state] = 1
-            return 1
-        elif self.game.check_is_winning(
-            self.player_type != PlayerType.PLAYER, opponent_state
-        ):
-            self.states[state] = 0
-            return 0
-        elif self.game.check_is_draw(state):
-            self.states[state] = 0
-            return 0
+            return self.states[state]["value"]
         else:
-            self.states[state] = 0.5
             return 0.5
 
     def get_current_combined_state(self):
@@ -181,29 +190,19 @@ class Player:
             prev_player_state = self.prev_state >> 9
             prev_opponent_state = self.prev_state & 0b111111111
             self.consider_state(prev_player_state, prev_opponent_state)
-        new_value = self.states[self.prev_state] + self.learning_rate * (
-            current_value - self.states[self.prev_state]
+        new_value = self.states[self.prev_state]["value"] + self.learning_rate * (
+            current_value - self.states[self.prev_state]["value"]
         )
-        self.states[self.prev_state] = new_value
-
-    # def check_state_change(self):
-    #     average_value_change = 0
-    #     i = 0
-    #     for state in self.states:
-    #         i += 1
-    #         if state in self.prev_states:
-    #             value_change = (
-    #                 (self.states[state] - self.prev_states[state])
-    #                 / self.prev_states[state]
-    #                 * 100
-    #             )
-    #         else:
-    #             value_change = self.states[state]
-    #         average_value_change = calculate_running_average(
-    #             average_value_change, value_change, i
-    #         )
-    #     self.prev_states = self.states
-    #     return average_value_change
+        self.total_moves += 1
+        self.max_change_rate = abs(
+            max(self.max_change_rate, new_value - self.states[self.prev_state]["value"])
+        )
+        self.average_change_rate = calculate_running_average(
+            self.average_change_rate,
+            abs(new_value - self.states[self.prev_state]["value"]),
+            self.total_moves,
+        )
+        self.states[self.prev_state]["value"] = new_value
 
 
 def main(args):
@@ -218,8 +217,9 @@ def main(args):
     wins = 0
     record = []
 
+    average_change_rate = 1
     i = 0
-    while i < args.num_rounds:
+    while average_change_rate >= 0.001:
         game_ended = False
         player_move = player.play_move()
 
@@ -247,12 +247,20 @@ def main(args):
             game.clear_board()
             player.prev_state = 0
             opponent.prev_state = 0
+            print(f"average change rate: {player.average_change_rate}")
+            player.max_change_rate = 0
             i += 1
             win_rate = wins / i
             record.append(win_rate)
+            average_change_rate = player.average_change_rate
 
     plot_results(
-        [{"record": record, "label": "win rate"}], "Win Rate", "Game", "Percentage"
+        [
+            {"record": record, "label": "win rate"},
+        ],
+        "Win Rate",
+        "Game",
+        "Percentage",
     )
 
 
@@ -265,9 +273,9 @@ def player_type_parser(value):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Tic Tac Toe Implementation")
-    parser.add_argument("--num_rounds", type=int, default=5000)
+    parser.add_argument("--num_rounds", type=int, default=10000)
     parser.add_argument("--seed", type=int, default=None)
-    parser.add_argument("--learning_rate", type=float, default=0.2)
+    parser.add_argument("--learning_rate", type=float, default=0.1)
     parser.add_argument("--exploring_rate", type=float, default=0.1)
     parser.add_argument(
         "--opponent_type", type=player_type_parser, default=PlayerType.RANDOM
