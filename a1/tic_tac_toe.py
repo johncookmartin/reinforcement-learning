@@ -97,7 +97,7 @@ class Player:
 
     def choose_optimal_move(self, options):
         i = 0
-        best_move = 0
+        best_move_arr = []
         best_move_value = -1
         for j in range(9):
             bit = (options >> j) & 1
@@ -105,9 +105,13 @@ class Player:
                 i += 1
                 option_value = self.get_move_value(j)
                 if option_value > best_move_value:
+                    best_move_arr = []
                     best_move_value = option_value
-                    best_move = j
-        return best_move
+                    best_move_arr.append(j)
+                elif option_value == best_move_value:
+                    best_move_arr.append(j)
+
+        return random.choice(best_move_arr)
 
     def get_row_options(self, prev_move):
         if prev_move < 3:
