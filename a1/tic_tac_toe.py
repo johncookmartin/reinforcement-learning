@@ -254,9 +254,6 @@ class Player:
             print("Player (X) | Opponent (O)")
             print("-" * 25)
 
-            print(f"player: {player_state:09b}")
-            print(f"opponent: {opponent_state:09b}")
-
             self.game.print_readable_state(combined_state)
         print()
 
