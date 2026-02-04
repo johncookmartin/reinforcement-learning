@@ -60,6 +60,7 @@ class UCBBanditPuller:
 
 def main(args):
 
+    # tracking data across all trials
     data_calculator = DataCalculator(args.num_arms, args.num_rounds)
 
     # want to control the seed but also have a different seed for each trial
@@ -93,6 +94,20 @@ def main(args):
                 print(f"average reward at round {j}: {puller.average_reward}")
 
         print(f"Optimal Expected Value: {optimal_value}")
+
+    print()
+    print("FINAL RESULTS")
+    print("-" * 50)
+    print(f"Seed: {args.seed}")
+    print(f"Confidence Rate: {args.confidence_rate}")
+    print(f"Final Average Value: {data_calculator.total_optimal_value_record[-1]}")
+    print("-" * 50)
+    print(f"{'Pulled Arm':<10} | {'Percentage Pulled':<17} | {'Average Value':<13}")
+    for i in range(len(data_calculator.total_optimal_pull_record)):
+        print(
+            f"{i:<10} | {data_calculator.total_optimal_pull_record[i][-1]:<17.15f} | {data_calculator.average_pull_values[i]:<13.11f}"
+        )
+    print("-" * 50)
 
     plot_results(
         [
@@ -128,7 +143,7 @@ if __name__ == "__main__":
     parser.add_argument("--num_arms", type=int, default=10)
     parser.add_argument("--num_rounds", type=int, default=5000)
     parser.add_argument("--num_trials", type=int, default=100)
-    parser.add_argument("--seed", type=int, default=None)
+    parser.add_argument("--seed", type=int, default=42)
     parser.add_argument("--confidence_rate", type=float, default=1)
 
     args = parser.parse_args()

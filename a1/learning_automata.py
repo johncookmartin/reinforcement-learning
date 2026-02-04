@@ -68,11 +68,6 @@ class LinearRewardBanditPuller:
 
 def main(args):
 
-    total_inaction_value_record = []
-    total_inaction_pull_record = []
-    total_penalty_value_record = []
-    total_penalty_pull_record = []
-
     inaction_calculator = DataCalculator(args.num_arms, args.num_rounds)
     penalty_calculator = DataCalculator(args.num_arms, args.num_rounds)
 
@@ -134,6 +129,27 @@ def main(args):
                 )
         print(
             f"Optimal Expected Value: {bandit.get_expected_value(bandit.get_optimal_action())}"
+        )
+
+    print()
+    print("FINAL RESULTS")
+    print("-" * 50)
+    print(f"Seed: {args.seed}")
+    print(f"Reward Rate: {args.reward_rate}")
+    print(f"Penalty Rate: {args.penalty_rate}")
+    print(
+        f"Final Average Value R-I: {inaction_calculator.total_optimal_value_record[-1]}"
+    )
+    print(
+        f"Final Average Value R-P: {penalty_calculator.total_optimal_value_record[-1]}"
+    )
+    print("-" * 50)
+    print(
+        f"{'Pulled Arm':<10} | {'Inaction Percentage Pulled':<26} | {'Penalty Percentage Pulled':<25} | {'Average Value':<13}"
+    )
+    for i in range(len(inaction_calculator.total_optimal_pull_record)):
+        print(
+            f"{i:<10} | {inaction_calculator.total_optimal_pull_record[i][-1]:<26.15f} | {penalty_calculator.total_optimal_pull_record[i][-1]:<25.15f} | {inaction_calculator.average_pull_values[i]:<13.11f}"
         )
 
     plot_results(
@@ -207,7 +223,7 @@ if __name__ == "__main__":
     parser.add_argument("--num_arms", type=int, default=10)
     parser.add_argument("--num_rounds", type=int, default=5000)
     parser.add_argument("--num_trials", type=int, default=100)
-    parser.add_argument("--seed", type=int, default=None)
+    parser.add_argument("--seed", type=int, default=42)
     parser.add_argument("--reward_rate", type=float, default=0.01)
     parser.add_argument("--penalty_rate", type=float, default=0.01)
 

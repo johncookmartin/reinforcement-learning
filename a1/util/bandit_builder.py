@@ -12,6 +12,8 @@ class BanditBuilder:
             range(num_arms), key=lambda i: self.get_expected_value(i), reverse=True
         )
 
+        # sorting the arms by value so that we can plot them as options
+        # on the graph across all trials
         self.sorted_values = []
         for rank, arm_index in enumerate(sorted_indices):
             self.bandit_arr[arm_index]["rank"] = rank

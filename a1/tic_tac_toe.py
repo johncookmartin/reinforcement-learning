@@ -247,8 +247,6 @@ class Player:
         print("-" * 70)
 
         for rank, (combined_state, value) in enumerate(sorted_states[:top_n], 1):
-            player_state = combined_state >> 9
-            opponent_state = combined_state & 0b111111111
 
             print(f"\nRank {rank}: Value = {value:.4f}")
             print("Player (X) | Opponent (O)")
