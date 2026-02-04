@@ -31,8 +31,7 @@
 
 class TicTacToeGame:
     def __init__(self):
-        self.x_moves = 0b000000000
-        self.o_moves = 0b000000000
+        self.clear_board()
 
     def check_is_winning(self, check_x=True, state=None):
         if state is None:
@@ -74,3 +73,27 @@ class TicTacToeGame:
     def clear_board(self):
         self.x_moves = 0b000000000
         self.o_moves = 0b000000000
+
+    def print_readable_state(self, input_state=None):
+        combined_state = (
+            input_state
+            if input_state is not None
+            else (self.x_moves << 9) | self.o_moves
+        )
+        x_state = combined_state >> 9
+        o_state = combined_state & 0b111111111
+        for row in range(3):
+            print(" ", end="")
+            for col in range(3):
+                pos = row * 3 + col
+                if (x_state >> pos) & 1:
+                    print("X", end="")
+                elif (o_state >> pos) & 1:
+                    print("O", end="")
+                else:
+                    print(" ", end="")
+
+                if col != 2:
+                    print(" | ", end="")
+                else:
+                    print()

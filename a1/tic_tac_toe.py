@@ -32,15 +32,28 @@ class Player:
         self.prev_state = 0
 
         self.total_moves = 0
-        self.average_change_rate = 0
-        self.max_change_rate = 0
+        self.total_games = 0
+        self.is_winning = False
+        self.win_record = []
+        self.win_rate = 0
+
+        self.average_change = 0
 
     def play_move(self, prev_move=None):
+        # check if game is over
+        if self.game.check_is_draw() or self.game.check_is_winning(
+            self.player_type != PlayerType.PLAYER
+        ):
+            self.log_no_win()
+            return -1
+
+        # choose move
         if self.player_type == PlayerType.PLAYER or self.player_type == PlayerType.SELF:
             move = self.choose_player_move()
         else:
             move = self.choose_opponent_move(prev_move)
         self.game.play_move(move, self.player_type == PlayerType.PLAYER)
+        self.total_moves += 1
         self.log_value()
         self.prev_state = self.get_current_combined_state()
         return move
@@ -151,31 +164,12 @@ class Player:
         )
         return player_state, opponent_state
 
-    # def consider_state(self, player_state, opponent_state):
-    #     state = (player_state << 9) | opponent_state
-    #     if state in self.states:
-    #         return self.states[state]["value"]
-    #     elif self.game.check_is_winning(
-    #         self.player_type == PlayerType.PLAYER, player_state
-    #     ):
-    #         self.states[state] = {"value": 1, "change_rate": 0, "changes": 0}
-    #         return 1
-    #     elif self.game.check_is_winning(
-    #         self.player_type != PlayerType.PLAYER, opponent_state
-    #     ):
-    #         self.states[state] = {"value": 0, "change_rate": 0, "changes": 0}
-    #         return 0
-    #     elif self.game.check_is_draw(state):
-    #         self.states[state] = {"value": 0, "change_rate": 0, "changes": 0}
-    #         return 0
-    #     else:
-    #         self.states[state] = {"value": 0.5, "change_rate": 0, "changes": 0}
-    #         return 0.5
-
     def consider_state(self, player_state, opponent_state):
-        state = (player_state << 9 | opponent_state)
+        state = player_state << 9 | opponent_state
         if state in self.states:
-            return self.states[state]["value"]
+            return self.states[state]
+        elif self.game.check_is_winning(player_state):
+            return 1
         else:
             return 0.5
 
@@ -183,85 +177,175 @@ class Player:
         player_state, opponent_state = self.get_current_states()
         return (player_state << 9) | opponent_state
 
+    def get_player_states_from_combined_state(self, combined_state):
+        left_state = combined_state >> 9
+        right_state = combined_state & 0b111111111
+        player_state = (
+            left_state if self.player_type == PlayerType.PLAYER else right_state
+        )
+        opponent_state = (
+            right_state if self.player_type != PlayerType.PLAYER else left_state
+        )
+        return player_state, opponent_state
+
     def log_value(self):
+        # get state
+        combined_state = self.get_current_combined_state()
         player_state, opponent_state = self.get_current_states()
         current_value = self.consider_state(player_state, opponent_state)
+
+        # log if player has won
+        self.is_winning = current_value == 1
+
+        # log current state
+        if combined_state not in self.states:
+            self.states[combined_state] = current_value
+
+        self.update_prev_state(current_value)
+
+    def log_no_win(self):
+        self.update_prev_state(0)
+
+    def update_prev_state(self, current_value):
+        # Log prev state and get value
         if self.prev_state not in self.states:
-            prev_player_state = self.prev_state >> 9
-            prev_opponent_state = self.prev_state & 0b111111111
-            self.consider_state(prev_player_state, prev_opponent_state)
-        new_value = self.states[self.prev_state]["value"] + self.learning_rate * (
-            current_value - self.states[self.prev_state]["value"]
+            prev_player_state, prev_opponent_state = (
+                self.get_player_states_from_combined_state(self.prev_state)
+            )
+            prev_value = self.consider_state(prev_player_state, prev_opponent_state)
+            self.states[self.prev_state] = prev_value
+        prev_value = self.states[self.prev_state]
+
+        # update previous state
+        new_value = prev_value + self.learning_rate * (current_value - prev_value)
+        self.states[self.prev_state] = new_value
+
+        self.average_change = calculate_running_average(
+            self.average_change, abs(new_value - prev_value), self.total_moves
         )
-        self.total_moves += 1
-        self.max_change_rate = abs(
-            max(self.max_change_rate, new_value - self.states[self.prev_state]["value"])
+
+    def reset_player(self):
+        self.total_games += 1
+        self.win_rate = calculate_running_average(
+            self.win_rate, self.is_winning, self.total_games
         )
-        self.average_change_rate = calculate_running_average(
-            self.average_change_rate,
-            abs(new_value - self.states[self.prev_state]["value"]),
-            self.total_moves,
+
+        self.win_record.append(self.win_rate)
+
+        self.is_winning = False
+        self.prev_state = 0
+
+    def print_top_states(self, top_n=10):
+        sorted_states = sorted(self.states.items(), key=lambda x: x[1], reverse=True)
+        print(
+            f"\nTop {top_n} States for {self.player_type.name} (Explore Rate: {self.exploring_rate}):"
         )
-        self.states[self.prev_state]["value"] = new_value
+        print("-" * 70)
+
+        for rank, (combined_state, value) in enumerate(sorted_states[:top_n], 1):
+            player_state = combined_state >> 9
+            opponent_state = combined_state & 0b111111111
+
+            print(f"\nRank {rank}: Value = {value:.4f}")
+            print("Player (X) | Opponent (O)")
+            print("-" * 25)
+
+            print(f"player: {player_state:09b}")
+            print(f"opponent: {opponent_state:09b}")
+
+            self.game.print_readable_state(combined_state)
+        print()
 
 
 def main(args):
     game = TicTacToeGame()
-    opponent = Player(
-        game, args.opponent_type, args.seed, args.learning_rate, args.exploring_rate
+
+    player_arr = []
+    opponent_arr = []
+
+    for player_type in PlayerType:
+        if player_type == PlayerType.PLAYER:
+            continue
+
+        # build player array
+        player_arr.append(
+            Player(game, PlayerType.PLAYER, args.seed, args.learning_rate, 0)
+        )
+        player_arr.append(
+            Player(
+                game,
+                PlayerType.PLAYER,
+                args.seed,
+                args.learning_rate,
+                args.exploring_rate,
+            )
+        )
+
+        # build opponent array
+        opponent_arr.append(Player(game, player_type, args.seed, args.learning_rate, 0))
+        opponent_arr.append(
+            Player(
+                game, player_type, args.seed, args.learning_rate, args.exploring_rate
+            )
+        )
+
+    for i in range(len(player_arr)):
+        player = player_arr[i]
+        opponent = opponent_arr[i]
+        convergence_threshold = 0.001
+
+        print()
+        print()
+        print(
+            f"STARTING GAME VS {opponent.player_type.name} EXPLORING RATE: {player.exploring_rate}"
+        )
+
+        while player.total_games <= args.num_rounds:
+            player_move = player.play_move()
+            game_over = player_move == -1
+            if not game_over:
+                opponent_move = opponent.play_move(player_move)
+                game_over = opponent_move == -1
+
+            if game_over:
+                game.clear_board()
+                player.reset_player()
+                opponent.reset_player()
+
+                if (
+                    player.average_change < convergence_threshold
+                    and player.total_games > 100
+                ):
+                    print(
+                        f"Converged after {player.total_games} games (avg_change={player.average_change:.6f})"
+                    )
+                    break
+
+        player.print_top_states()
+        plot_results(
+            [
+                {
+                    "record": player.win_record,
+                    "label": f"player exploration={player.exploring_rate}",
+                },
+            ],
+            f"Record Vs. {opponent.player_type.name}",
+            "Game",
+            "Win Rate",
+        )
+
+    print("RESULTS")
+    print("-" * 60)
+    print(
+        f"{'Explore Rate':<12} | {'Opponent':<12} | {'Win Rate':<10} | {'Explored States':<16}"
     )
-    player = Player(
-        game, PlayerType.PLAYER, args.seed, args.learning_rate, args.exploring_rate
-    )
-
-    wins = 0
-    record = []
-
-    average_change_rate = 1
-    i = 0
-    while average_change_rate >= 0.001:
-        game_ended = False
-        player_move = player.play_move()
-
-        # check if player won
-        if game.check_is_winning():
-            wins += 1
-            game_ended = True
-            opponent.log_value()
-
-        # check for draw
-        if game.check_is_draw():
-            game_ended = True
-            player.log_value()
-            opponent.log_value()
-
-        if not game_ended:
-            opponent.play_move(player_move)
-
-        # check if opponent won
-        if game.check_is_winning(False):
-            game_ended = True
-            player.log_value()
-
-        if game_ended:
-            game.clear_board()
-            player.prev_state = 0
-            opponent.prev_state = 0
-            print(f"average change rate: {player.average_change_rate}")
-            player.max_change_rate = 0
-            i += 1
-            win_rate = wins / i
-            record.append(win_rate)
-            average_change_rate = player.average_change_rate
-
-    plot_results(
-        [
-            {"record": record, "label": "win rate"},
-        ],
-        "Win Rate",
-        "Game",
-        "Percentage",
-    )
+    print("-" * 60)
+    for i in range(len(player_arr)):
+        disp_player = player_arr[i]
+        disp_opponent = opponent_arr[i]
+        print(
+            f"{disp_player.exploring_rate:<12.1f} | {disp_opponent.player_type.name:<12} | {disp_player.win_rate:<10.4f} | {len(disp_player.states) + 1:<10}"
+        )
 
 
 def player_type_parser(value):
