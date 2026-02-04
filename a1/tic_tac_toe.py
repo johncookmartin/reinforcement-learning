@@ -357,13 +357,9 @@ def player_type_parser(value):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Tic Tac Toe Implementation")
     parser.add_argument("--num_rounds", type=int, default=10000)
-    parser.add_argument("--seed", type=int, default=None)
+    parser.add_argument("--seed", type=int, default=42)
     parser.add_argument("--learning_rate", type=float, default=0.1)
     parser.add_argument("--exploring_rate", type=float, default=0.1)
-    parser.add_argument(
-        "--opponent_type", type=player_type_parser, default=PlayerType.RANDOM
-    )
-    parser.add_argument("--debug", action="store_true")
 
     args = parser.parse_args()
     main(args)
