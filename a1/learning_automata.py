@@ -119,13 +119,13 @@ def main(args):
                     f"reward-inaction pulled optimal arm {inaction_puller.pull_record[0]} times"
                 )
                 print(
-                    f"average reward for reward-inaction at round {j}: {inaction_puller.average_reward}"
+                    f"average reward for reward-inaction at round {j+1}: {inaction_puller.average_reward}"
                 )
                 print(
                     f"reward-penalty pulled optimal arm {penalty_puller.pull_record[0]} times"
                 )
                 print(
-                    f"avergage reward for reward-penalty at round {j}: {penalty_puller.average_reward}"
+                    f"avergage reward for reward-penalty at round {j+1}: {penalty_puller.average_reward}"
                 )
         print(
             f"Optimal Expected Value: {bandit.get_expected_value(bandit.get_optimal_action())}"

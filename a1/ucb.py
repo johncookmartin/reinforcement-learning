@@ -91,7 +91,7 @@ def main(args):
 
             if (j + 1) % 100 == 0:
                 print(f"optimal arm pulled {puller.pull_record[0]} times")
-                print(f"average reward at round {j}: {puller.average_reward}")
+                print(f"average reward at round {j+1}: {puller.average_reward}")
 
         print(f"Optimal Expected Value: {optimal_value}")
 
