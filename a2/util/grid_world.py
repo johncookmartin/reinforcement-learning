@@ -21,6 +21,8 @@ class GridWorld:
         self.size = self.dimension**2
 
         self.states = []
+        self.k = 0
+        self.delta = 0
 
     def create_states(self, bellman_data):
         # populate the dict with states
@@ -52,7 +54,7 @@ class GridWorld:
             state = self.states[i]
             for adjacent_state, index in neighbour_indexes.items():
                 neighbour_state = None
-                if index in self.states:
+                if 0 <= index < len(self.states):
                     neighbour_state = self.states[index]
                 state.join_states(adjacent_state, neighbour_state)
 
@@ -62,16 +64,25 @@ class GridWorld:
 
     def perform_policy_sweep(self):
         # initialize the state actions using p_one, p_two, reward and discount
+        delta = 0
         for state in self.states:
-            state.iterate_policy
+            state.iterate_policy()
+            delta = max(delta, state.value - state.new_value)
         for state in self.states:
-            state.record_policy
+            state.record_policy()
+        self.k += 1
+        self.delta = delta
+
+    def perform_policy_iteration(self):
+        while self.delta > self.accuracy or self.delta == 0:
+            self.perform_policy_sweep()
 
     def print_grid(self):
-        print(f"GRID {self.size}")
+        print(f"GRID {self.size} k = {self.k}")
         print("-" * 25)
         for i, state in enumerate(self.states):
             if i % self.dimension == 0:
                 print()
-            print(f"{state.index:2d}: {state.value:.2f}", end=" ")
+            indicator = "R" if state.reward_state else str(state.index)
+            print(f"{indicator:>2}: {state.value:.2f}", end=" ")
         print()

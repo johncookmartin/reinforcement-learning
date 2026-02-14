@@ -34,7 +34,7 @@ class State:
         # initialize value function to 0
         self.value = 0
         # initialize new value function to None (k+1)
-        self.new_value = None
+        self.new_value = 0
 
         self.neighbours = [None] * 9
         self.actions = {
@@ -73,15 +73,16 @@ class State:
         return [option_a, option_b]
 
     def state_reward_summand(self, prob, state):
-        return prob * (
+        result = prob * (
             self.bellman_data.reward + self.bellman_data.discount * state.value
         )
+        return result
 
     def action_summand(self, target, adjacent_states):
         target_value = self.state_reward_summand(self.bellman_data.p_one, target)
         self_value = self.state_reward_summand(self.bellman_data.p_two, self)
 
-        adjacent_value = None
+        adjacent_value = 0
         d = len(adjacent_states)
         p_three = (1 - self.bellman_data.p_one - self.bellman_data.p_two) / d
         for adjacent_state in adjacent_states:
@@ -96,8 +97,9 @@ class State:
 
         total_value = 0
         for action in self.actions:
-            target, adjacent_states = self.actions[action]
-            total_value += self.action_summand(target, adjacent_states)
+            target = self.actions[action]["target"]
+            adjacent_states = self.actions[action]["adjacent_states"]
+            total_value += 0.25 * self.action_summand(target, adjacent_states)
 
         self.new_value = total_value
 
