@@ -1,24 +1,5 @@
-from enum import Enum
-from typing import NamedTuple
-
-
-class AdjacentStates(Enum):
-    TOP_LEFT = 0
-    TOP = 1
-    TOP_RIGHT = 2
-    LEFT = 3
-    SELF = 4
-    RIGHT = 5
-    BOTTOM_LEFT = 6
-    BOTTOM = 7
-    BOTTOM_RIGHT = 8
-
-
-class BellmanData(NamedTuple):
-    p_one: float
-    p_two: float
-    discount: float
-    reward: float
+from util.interfaces import AdjacentStates
+from util.grid_action import Action
 
 
 def policy_evaluation_backup_summand(prob_action, prob_result, reward, discount, state):
@@ -37,40 +18,16 @@ class State:
         self.new_value = 0
 
         self.neighbours = [None] * 9
-        self.actions = {
-            AdjacentStates.TOP: {},
-            AdjacentStates.BOTTOM: {},
-            AdjacentStates.RIGHT: {},
-            AdjacentStates.LEFT: {},
-        }
+        self.actions = []
 
     def join_states(self, adjacent_state, state):
         self.neighbours[adjacent_state.value] = state
 
     def initialize_actions(self):
-        for action in self.actions:
-            state = self.neighbours[action.value]
-            self.actions[action]["target"] = state if state is not None else self
-            self.actions[action]["adjacent_states"] = self.get_adjacent_states(action)
-
-    def get_adjacent_states(self, action):
-        top = self.neighbours[AdjacentStates.TOP.value]
-        bottom = self.neighbours[AdjacentStates.BOTTOM.value]
-        right = self.neighbours[AdjacentStates.RIGHT.value]
-        left = self.neighbours[AdjacentStates.LEFT.value]
-        if action == AdjacentStates.TOP:
-            option_a = left if left is not None else bottom
-            option_b = right if right is not None else bottom
-        if action == AdjacentStates.BOTTOM:
-            option_a = left if left is not None else top
-            option_b = right if right is not None else top
-        if action == AdjacentStates.RIGHT:
-            option_a = top if top is not None else left
-            option_b = bottom if bottom is not None else left
-        if action == AdjacentStates.LEFT:
-            option_a = top if top is not None else right
-            option_b = bottom if bottom is not None else right
-        return [option_a, option_b]
+        self.actions.append(Action(AdjacentStates.TOP, self, self.neighbours))
+        self.actions.append(Action(AdjacentStates.BOTTOM, self, self.neighbours))
+        self.actions.append(Action(AdjacentStates.RIGHT, self, self.neighbours))
+        self.actions.append(Action(AdjacentStates.LEFT, self, self.neighbours))
 
     def state_reward_summand(self, prob, state):
         result = prob * (
@@ -97,8 +54,8 @@ class State:
 
         total_value = 0
         for action in self.actions:
-            target = self.actions[action]["target"]
-            adjacent_states = self.actions[action]["adjacent_states"]
+            target = action.target
+            adjacent_states = action.adjacent_states
             total_value += 0.25 * self.action_summand(target, adjacent_states)
 
         self.new_value = total_value

@@ -1,7 +1,7 @@
 import argparse
 
-from util.grid_state import BellmanData
-from util.grid_world import GridWorld, GridWorldPayload
+from util.interfaces import BellmanData, GridWorldPayload
+from util.grid_world import GridWorld
 
 
 def main(args):

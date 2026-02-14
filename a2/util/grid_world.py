@@ -1,14 +1,7 @@
 import random
-from typing import List, NamedTuple
 
-from util.grid_state import State, AdjacentStates
-
-
-class GridWorldPayload(NamedTuple):
-    dimensions: int
-    accuracy: float
-    reward_states: List[int]
-    seed: int
+from util.interfaces import AdjacentStates, GridWorldPayload
+from util.grid_state import State
 
 
 class GridWorld:
