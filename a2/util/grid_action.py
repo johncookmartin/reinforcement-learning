@@ -9,24 +9,44 @@ class Action:
         self.adjacent_states = self.get_adjacent_states(neighbours)
 
     def get_target(self, neighbours):
-        state = neighbours[self.action.value]
-        return state if state is not None else self.state
+        target_state = neighbours[self.action.value]
+        return target_state if target_state is not None else self.state
 
     def get_adjacent_states(self, neighbours):
-        top = neighbours[AdjacentStates.TOP.value]
-        bottom = neighbours[AdjacentStates.BOTTOM.value]
-        right = neighbours[AdjacentStates.RIGHT.value]
-        left = neighbours[AdjacentStates.LEFT.value]
+        options = []
         if self.action == AdjacentStates.TOP:
-            option_a = left if left is not None else bottom
-            option_b = right if right is not None else bottom
-        if self.action == AdjacentStates.BOTTOM:
-            option_a = left if left is not None else top
-            option_b = right if right is not None else top
-        if self.action == AdjacentStates.RIGHT:
-            option_a = top if top is not None else left
-            option_b = bottom if bottom is not None else left
-        if self.action == AdjacentStates.LEFT:
-            option_a = top if top is not None else right
-            option_b = bottom if bottom is not None else right
-        return [option_a, option_b]
+            top_left = neighbours[AdjacentStates.TOP_LEFT.value]
+            top_right = neighbours[AdjacentStates.TOP_RIGHT.value]
+            if top_left is not None:
+                options.append(top_left)
+            if top_right is not None:
+                options.append(top_right)
+        elif self.action == AdjacentStates.BOTTOM:
+            bottom_left = neighbours[AdjacentStates.BOTTOM_LEFT.value]
+            bottom_right = neighbours[AdjacentStates.BOTTOM_RIGHT.value]
+            if bottom_left is not None:
+                options.append(bottom_left)
+            if bottom_right is not None:
+                options.append(bottom_right)
+        elif self.action == AdjacentStates.RIGHT:
+            top_right = neighbours[AdjacentStates.TOP_RIGHT.value]
+            bottom_right = neighbours[AdjacentStates.BOTTOM_RIGHT.value]
+            if top_right is not None:
+                options.append(top_right)
+            if bottom_right is not None:
+                options.append(bottom_right)
+        else:
+            top_left = neighbours[AdjacentStates.TOP_LEFT.value]
+            bottom_left = neighbours[AdjacentStates.BOTTOM_LEFT.value]
+            if top_left is not None:
+                options.append(top_left)
+            if bottom_left is not None:
+                options.append(bottom_left)
+        return options
+
+    def print_action(self):
+        print(f"{self.action.name}")
+        print("-" * 10)
+        print(f"target: {self.target.index}")
+        for state in self.adjacent_states:
+            print(f"adjacent: {state.index}")

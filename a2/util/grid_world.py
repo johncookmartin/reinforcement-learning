@@ -6,7 +6,6 @@ from util.grid_state import State
 
 class GridWorld:
     def __init__(self, payload: GridWorldPayload):
-        self.rgn = random.seed(payload.seed)
         self.dimension = payload.dimensions
         self.accuracy = payload.accuracy
         self.reward_states = payload.reward_states
@@ -39,17 +38,28 @@ class GridWorld:
                 AdjacentStates.RIGHT: i + 1,
                 AdjacentStates.BOTTOM_LEFT: i + self.dimension - 1,
                 AdjacentStates.BOTTOM: i + self.dimension,
-                AdjacentStates.BOTTOM_RIGHT: i + self.dimension + self.dimension + 1,
+                AdjacentStates.BOTTOM_RIGHT: i + self.dimension + 1,
             }
 
             # iterate through states and join adjacent states
             # this will create a graph with states as nodes
             state = self.states[i]
+            # check to see if state is on the left or right side (or neither)
+            is_left = state.index % self.dimension == 0
+            is_right = state.index % self.dimension == self.dimension - 1
             for adjacent_state, index in neighbour_indexes.items():
-                neighbour_state = None
-                if 0 <= index < len(self.states):
-                    neighbour_state = self.states[index]
-                state.join_states(adjacent_state, neighbour_state)
+                # if state is on the left edge, there are no states to the left
+                if "LEFT" in adjacent_state.name and is_left:
+                    state.join_states(adjacent_state, None)
+                # if state is on the right edge, there are no states to the right
+                elif "RIGHT" in adjacent_state.name and is_right:
+                    state.join_states(adjacent_state, None)
+                # if the index is out of bounds of the state array, the current state
+                # must be on the top or bottom of the grid
+                elif 0 <= index < len(self.states):
+                    state.join_states(adjacent_state, self.states[index])
+                else:
+                    state.join_states(adjacent_state, None)
 
     def initialize_actions(self):
         for state in self.states:
@@ -76,6 +86,6 @@ class GridWorld:
         for i, state in enumerate(self.states):
             if i % self.dimension == 0:
                 print()
-            indicator = "R" if state.reward_state else str(state.index)
+            indicator = "**" if state.reward_state else str(state.index)
             print(f"{indicator:>2}: {state.value:.2f}", end=" ")
         print()

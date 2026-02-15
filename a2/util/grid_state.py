@@ -30,9 +30,10 @@ class State:
         self.actions.append(Action(AdjacentStates.LEFT, self, self.neighbours))
 
     def state_reward_summand(self, prob, state):
-        result = prob * (
-            self.bellman_data.reward + self.bellman_data.discount * state.value
-        )
+        r = self.bellman_data.reward
+        d = self.bellman_data.discount
+        v = state.value
+        result = prob * (r + d * v)
         return result
 
     def action_summand(self, target, adjacent_states):
@@ -41,9 +42,10 @@ class State:
 
         adjacent_value = 0
         d = len(adjacent_states)
-        p_three = (1 - self.bellman_data.p_one - self.bellman_data.p_two) / d
-        for adjacent_state in adjacent_states:
-            adjacent_value += self.state_reward_summand(p_three, adjacent_state)
+        if d > 0:
+            p_three = (1 - self.bellman_data.p_one - self.bellman_data.p_two) / d
+            for adjacent_state in adjacent_states:
+                adjacent_value += self.state_reward_summand(p_three, adjacent_state)
 
         return target_value + self_value + adjacent_value
 
@@ -62,3 +64,13 @@ class State:
 
     def record_policy(self):
         self.value = self.new_value
+
+    def print_state(self):
+        print()
+        print(f"State: {self.index}")
+        print(f"-------------------")
+        print(f"value: {self.value}")
+        print("actions:")
+        for action in self.actions:
+            action.print_action()
+            print()

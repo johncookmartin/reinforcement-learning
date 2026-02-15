@@ -6,7 +6,6 @@ class GridWorldPayload(NamedTuple):
     dimensions: int
     accuracy: float
     reward_states: List[int]
-    seed: int
 
 
 class BellmanData(NamedTuple):
