@@ -92,15 +92,7 @@ class GridWorld:
     def perform_value_iteration(self):
         while self.delta > self.accuracy or self.k == 0:
             self.perform_policy_sweep()
-            print("-" * 25)
-            print(f"K = {self.k}")
-            print("-" * 25)
-            self.states[3].print_state()
-            self.states[12].print_state()
             self.greedify()
-            print("-" * 25)
-            self.states[3].print_state()
-            self.states[12].print_state()
 
     def print_grid(self, include_actions=False):
         print(f"GRID {self.size}      k = {self.k}")
