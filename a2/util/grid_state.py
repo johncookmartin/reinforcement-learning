@@ -20,9 +20,12 @@ class State:
         self.neighbours = [None] * 9
         self.actions = []
 
+    # assign another state to each adjacent index (see util.interfaces AdjecentStates)
     def join_states(self, adjacent_state, state):
         self.neighbours[adjacent_state.value] = state
 
+    # load up the actions with the target states, probabilities and states
+    # adjacent to the target
     def initialize_actions(self):
         self.actions.append(
             Action(AdjacentStates.TOP, self, self.neighbours, self.bellman_data)
@@ -42,6 +45,7 @@ class State:
             # we are in the terminal state, no need to further iterate
             return
 
+        # sum all expected values of all actions
         total_value = 0
         for action in self.actions:
             total_value += action.calculate_action_value()

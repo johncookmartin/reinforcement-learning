@@ -9,12 +9,17 @@ class Action:
         self.adjacent_states = self.get_adjacent_states(neighbours)
         self.bellman_data = bellman_data
 
+    # if target is None, this action will result in agent returning to
+    # original state
     def get_target(self, neighbours):
         target_state = neighbours[self.action.value]
         return target_state if target_state is not None else self.state
 
+    # calculate adjacent states to target state
     def get_adjacent_states(self, neighbours):
         options = []
+        # if any of the adjacent states are None, re distribute the
+        # probability to the target state
         if self.action == AdjacentStates.TOP:
             top_left = neighbours[AdjacentStates.TOP_LEFT.value]
             top_right = neighbours[AdjacentStates.TOP_RIGHT.value]
@@ -48,9 +53,11 @@ class Action:
         return options
 
     def calculate_action_value(self):
+        # add target and self values
         target_value = self.state_reward_summand(self.bellman_data.p_one, self.target)
         self_value = self.state_reward_summand(self.bellman_data.p_two, self.state)
 
+        # add target adjacent state values
         adjacent_value = 0
         d = len(self.adjacent_states)
         if d > 0:
@@ -59,9 +66,12 @@ class Action:
                 adjacent_value += self.state_reward_summand(p_three, adjacent_state)
 
         summation = target_value + self_value + adjacent_value
+        # there are 4 actions to take so each have a .25 prob
         result = 0.25 * summation
         return result
 
+    # calculate the prob of state result * reward plus discount times previous value of
+    # result state
     def state_reward_summand(self, prob, state):
         r = self.bellman_data.reward
         d = self.bellman_data.discount

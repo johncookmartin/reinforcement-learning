@@ -5,14 +5,19 @@ from util.grid_world import GridWorld
 
 
 def main(args):
+    # creating the grid structure dynamically based on args
     payload = GridWorldPayload(args.dimensions, args.accuracy, args.reward_states)
     grid = GridWorld(payload)
 
+    # this creates the states, joins them together in a graph, and defines the various
+    # actions that can be taken per state
     bellman_data = BellmanData(args.p_one, args.p_two, args.discount, args.reward)
     grid.create_states(bellman_data)
     grid.join_states()
     grid.initialize_actions()
 
+    # perform the sweeps and the backtracking algorithm until delta is less than or
+    # equal to theta
     grid.perform_policy_iteration()
     grid.print_grid()
 

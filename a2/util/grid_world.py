@@ -69,9 +69,13 @@ class GridWorld:
         # initialize the state actions using p_one, p_two, reward and discount
         delta = 0
         for state in self.states:
+            # this method calculates the new values for states
             state.iterate_policy()
             delta = max(delta, state.value - state.new_value)
         for state in self.states:
+            # this method updates the value of states with new values
+            # must do this seperately so that we still have the old
+            # values when doing the calculations
             state.record_policy()
         self.k += 1
         self.delta = delta
