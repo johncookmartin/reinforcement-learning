@@ -15,7 +15,7 @@ class State:
 
         # initialize value function to 0
         self.value = Decimal(0)
-        # initialize new value function to None (k+1)
+        # initialize new value function to 0 (k+1)
         self.new_value = Decimal(0)
 
         self.neighbours = [None] * 9
