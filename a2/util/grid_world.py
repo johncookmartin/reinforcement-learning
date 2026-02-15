@@ -80,16 +80,50 @@ class GridWorld:
         self.k += 1
         self.delta = delta
 
+    def greedify(self):
+        for state in self.states:
+            state.greedify()
+
     def perform_policy_iteration(self):
-        while self.delta > self.accuracy or self.delta == 0:
+        while self.delta > self.accuracy or self.k == 0:
             self.perform_policy_sweep()
 
-    def print_grid(self):
-        print(f"GRID {self.size} k = {self.k}")
+    def perform_value_iteration(self):
+        while self.delta > self.accuracy or self.k == 0:
+            self.perform_policy_sweep()
+            print("-" * 25)
+            print(f"K = {self.k}")
+            print("-" * 25)
+            self.states[3].print_state()
+            self.states[12].print_state()
+            self.greedify()
+            print("-" * 25)
+            self.states[3].print_state()
+            self.states[12].print_state()
+
+    def print_grid(self, include_actions=False):
+        print(f"GRID {self.size}      k = {self.k}")
         print("-" * 25)
+        print()
+        print("VALUES:")
         for i, state in enumerate(self.states):
-            if i % self.dimension == 0:
+            if i % self.dimension == 0 and i > 0:
                 print()
             indicator = "**" if state.reward_state else str(state.index)
             print(f"{indicator:>2}: {state.value:.2f}", end=" ")
         print()
+        if include_actions:
+            print()
+            print("ACTIONS")
+            for i, state in enumerate(self.states):
+                if i % self.dimension == 0 and i > 0:
+                    print()
+
+                if not state.reward_state and state.actions:
+                    actions_str = "".join(
+                        [action.action.name[0] for action in state.actions]
+                    )
+                    print(f"[{actions_str:4}]", end=" ")
+                else:
+                    print("[TERM]", end=" ")
+            print()

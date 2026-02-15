@@ -8,6 +8,7 @@ class Action:
         self.target = self.get_target(neighbours)
         self.adjacent_states = self.get_adjacent_states(neighbours)
         self.bellman_data = bellman_data
+        self.value = 0
 
     # if target is None, this action will result in agent returning to
     # original state
@@ -67,8 +68,8 @@ class Action:
 
         summation = target_value + self_value + adjacent_value
         # there are 4 actions to take so each have a .25 prob
-        result = 0.25 * summation
-        return result
+        self.value = 0.25 * summation
+        return self.value
 
     # calculate the prob of state result * reward plus discount times previous value of
     # result state
@@ -82,6 +83,7 @@ class Action:
     def print_action(self):
         print(f"{self.action.name}")
         print("-" * 10)
+        print(f"value: {self.value}")
         print(f"target: {self.target.index}")
         for state in self.adjacent_states:
             print(f"adjacent: {state.index}")

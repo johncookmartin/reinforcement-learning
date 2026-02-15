@@ -27,6 +27,10 @@ class State:
     # load up the actions with the target states, probabilities and states
     # adjacent to the target
     def initialize_actions(self):
+        # no need to calculate actions for the terminal state
+        if self.reward_state:
+            return
+
         self.actions.append(
             Action(AdjacentStates.TOP, self, self.neighbours, self.bellman_data)
         )
@@ -54,6 +58,23 @@ class State:
 
     def record_policy(self):
         self.value = self.new_value
+
+    # iterate through all the actions and only keep the
+    # actions with the highest value
+    def greedify(self):
+        new_actions = []
+        max_value = None
+        for action in self.actions:
+            if max_value is None:
+                max_value = action.value
+                new_actions.append(action)
+            elif action.value == max_value:
+                new_actions.append(action)
+            elif action.value > max_value:
+                new_actions = []
+                max_value = action.value
+                new_actions.append(action)
+        self.actions = new_actions
 
     def print_state(self):
         print()
