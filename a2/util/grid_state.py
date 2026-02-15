@@ -24,30 +24,18 @@ class State:
         self.neighbours[adjacent_state.value] = state
 
     def initialize_actions(self):
-        self.actions.append(Action(AdjacentStates.TOP, self, self.neighbours))
-        self.actions.append(Action(AdjacentStates.BOTTOM, self, self.neighbours))
-        self.actions.append(Action(AdjacentStates.RIGHT, self, self.neighbours))
-        self.actions.append(Action(AdjacentStates.LEFT, self, self.neighbours))
-
-    def state_reward_summand(self, prob, state):
-        r = self.bellman_data.reward
-        d = self.bellman_data.discount
-        v = state.value
-        result = prob * (r + d * v)
-        return result
-
-    def action_summand(self, target, adjacent_states):
-        target_value = self.state_reward_summand(self.bellman_data.p_one, target)
-        self_value = self.state_reward_summand(self.bellman_data.p_two, self)
-
-        adjacent_value = 0
-        d = len(adjacent_states)
-        if d > 0:
-            p_three = (1 - self.bellman_data.p_one - self.bellman_data.p_two) / d
-            for adjacent_state in adjacent_states:
-                adjacent_value += self.state_reward_summand(p_three, adjacent_state)
-
-        return target_value + self_value + adjacent_value
+        self.actions.append(
+            Action(AdjacentStates.TOP, self, self.neighbours, self.bellman_data)
+        )
+        self.actions.append(
+            Action(AdjacentStates.BOTTOM, self, self.neighbours, self.bellman_data)
+        )
+        self.actions.append(
+            Action(AdjacentStates.RIGHT, self, self.neighbours, self.bellman_data)
+        )
+        self.actions.append(
+            Action(AdjacentStates.LEFT, self, self.neighbours, self.bellman_data)
+        )
 
     def iterate_policy(self):
         if self.reward_state:
@@ -56,9 +44,7 @@ class State:
 
         total_value = 0
         for action in self.actions:
-            target = action.target
-            adjacent_states = action.adjacent_states
-            total_value += 0.25 * self.action_summand(target, adjacent_states)
+            total_value += action.calculate_action_value()
 
         self.new_value = total_value
 
