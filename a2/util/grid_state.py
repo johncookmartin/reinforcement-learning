@@ -21,7 +21,7 @@ class State:
         self.actions = []
 
     def join_states(self, adjacent_state, state):
-        self.neighbours[adjacent_state.value] = state
+        self.neighbours[adjacent_state.value] = state if state is not None else self
 
     def initialize_actions(self):
         self.actions.append(Action(AdjacentStates.TOP, self, self.neighbours))

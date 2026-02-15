@@ -5,44 +5,26 @@ class Action:
     def __init__(self, action, state, neighbours):
         self.action = action
         self.state = state
-        self.target = self.get_target(neighbours)
+        self.target = neighbours[self.action.value]
         self.adjacent_states = self.get_adjacent_states(neighbours)
 
-    def get_target(self, neighbours):
-        target_state = neighbours[self.action.value]
-        return target_state if target_state is not None else self.state
-
     def get_adjacent_states(self, neighbours):
-        options = []
         if self.action == AdjacentStates.TOP:
             top_left = neighbours[AdjacentStates.TOP_LEFT.value]
             top_right = neighbours[AdjacentStates.TOP_RIGHT.value]
-            if top_left is not None:
-                options.append(top_left)
-            if top_right is not None:
-                options.append(top_right)
+            return [top_left, top_right]
         elif self.action == AdjacentStates.BOTTOM:
             bottom_left = neighbours[AdjacentStates.BOTTOM_LEFT.value]
             bottom_right = neighbours[AdjacentStates.BOTTOM_RIGHT.value]
-            if bottom_left is not None:
-                options.append(bottom_left)
-            if bottom_right is not None:
-                options.append(bottom_right)
+            return [bottom_left, bottom_right]
         elif self.action == AdjacentStates.RIGHT:
             top_right = neighbours[AdjacentStates.TOP_RIGHT.value]
             bottom_right = neighbours[AdjacentStates.BOTTOM_RIGHT.value]
-            if top_right is not None:
-                options.append(top_right)
-            if bottom_right is not None:
-                options.append(bottom_right)
+            return [top_right, bottom_right]
         else:
             top_left = neighbours[AdjacentStates.TOP_LEFT.value]
             bottom_left = neighbours[AdjacentStates.BOTTOM_LEFT.value]
-            if top_left is not None:
-                options.append(top_left)
-            if bottom_left is not None:
-                options.append(bottom_left)
-        return options
+            return [top_left, bottom_left]
 
     def print_action(self):
         print(f"{self.action.name}")
