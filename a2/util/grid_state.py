@@ -1,3 +1,4 @@
+from decimal import Decimal
 from util.interfaces import AdjacentStates
 from util.grid_action import Action
 
@@ -13,9 +14,9 @@ class State:
         self.reward_state = reward_state
 
         # initialize value function to 0
-        self.value = 0
+        self.value = Decimal(0)
         # initialize new value function to None (k+1)
-        self.new_value = 0
+        self.new_value = Decimal(0)
 
         self.neighbours = [None] * 9
         self.actions = []

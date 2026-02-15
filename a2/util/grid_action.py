@@ -1,3 +1,4 @@
+from decimal import Decimal
 from util.interfaces import AdjacentStates
 
 
@@ -68,16 +69,17 @@ class Action:
 
         summation = target_value + self_value + adjacent_value
         # there are 4 actions to take so each have a .25 prob
-        self.value = 0.25 * summation
+        self.value = Decimal("0.25") * summation
         return self.value
 
     # calculate the prob of state result * reward plus discount times previous value of
     # result state
     def state_reward_summand(self, prob, state):
-        r = self.bellman_data.reward
-        d = self.bellman_data.discount
-        v = state.value
-        result = prob * (r + d * v)
+        r = Decimal(str(self.bellman_data.reward))
+        d = Decimal(str(self.bellman_data.discount))
+        v = Decimal(str(state.value))
+        p = Decimal(str(prob))
+        result = p * (r + d * v)
         return result
 
     def print_action(self):

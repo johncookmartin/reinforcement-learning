@@ -1,3 +1,4 @@
+from decimal import Decimal
 import random
 
 from util.interfaces import AdjacentStates, GridWorldPayload
@@ -67,7 +68,7 @@ class GridWorld:
 
     def perform_policy_sweep(self):
         # initialize the state actions using p_one, p_two, reward and discount
-        delta = 0
+        delta = Decimal(0)
         for state in self.states:
             # this method calculates the new values for states
             state.iterate_policy()
