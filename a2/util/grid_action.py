@@ -42,6 +42,8 @@ class Action:
                 options.append(top_left)
             if bottom_left is not None:
                 options.append(bottom_left)
+        while len(options) < 2:
+            options.append(self.target)
         return options
 
     def print_action(self):
