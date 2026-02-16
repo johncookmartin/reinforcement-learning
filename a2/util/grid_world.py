@@ -1,5 +1,4 @@
 from decimal import Decimal
-import random
 
 from util.interfaces import AdjacentStates, GridWorldPayload
 from util.grid_state import GridState
