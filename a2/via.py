@@ -19,7 +19,7 @@ def main(args):
     # perform the sweeps and the backtracking algorithm until delta is less than or
     # equal to theta
     grid.perform_value_iteration()
-    grid.print_grid(include_actions=True)
+    grid.print_grid()
 
 
 if __name__ == "__main__":

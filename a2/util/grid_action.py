@@ -54,7 +54,7 @@ class GridAction:
             options.append(self.target)
         return options
 
-    def calculate_action_value(self):
+    def calculate_action_value(self, prob):
         # add target and self values
         target_value = self.state_reward_summand(self.bellman_data.p_one, self.target)
         self_value = self.state_reward_summand(self.bellman_data.p_two, self.state)
@@ -68,8 +68,7 @@ class GridAction:
                 adjacent_value += self.state_reward_summand(p_three, adjacent_state)
 
         summation = target_value + self_value + adjacent_value
-        # there are 4 actions to take so each have a .25 prob
-        self.value = Decimal("0.25") * summation
+        self.value = Decimal(prob) * summation
         return self.value
 
     # calculate the prob of state result * reward plus discount times previous value of

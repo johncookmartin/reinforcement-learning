@@ -13,9 +13,9 @@ class GridState:
         self.bellman_data = bellman_data
         self.reward_state = reward_state
 
-        # initialize value function to 0
+        # initialize value to 0
         self.value = Decimal(0)
-        # initialize new value function to 0 (k+1)
+        # initialize new value to 0 (k+1)
         self.new_value = Decimal(0)
 
         self.neighbours = [None] * 9
@@ -45,20 +45,19 @@ class GridState:
             GridAction(AdjacentStates.LEFT, self, self.neighbours, self.bellman_data)
         )
 
-    def iterate_policy(self):
+    # calculate (v)k + 1 for current state and store value in new_value
+    def evaluate_policy(self):
         if self.reward_state:
             # we are in the terminal state, no need to further iterate
             return
 
-        # sum all expected values of all actions
+        # sum of expected value of all remaining actions
         total_value = 0
+        prob = Decimal(1 / len(self.actions))
         for action in self.actions:
-            total_value += action.calculate_action_value()
+            total_value += action.calculate_action_value(prob)
 
         self.new_value = total_value
-
-    def record_policy(self):
-        self.value = self.new_value
 
     # iterate through all the actions and only keep the
     # actions with the highest value
@@ -75,7 +74,13 @@ class GridState:
                 new_actions = []
                 max_value = action.value
                 new_actions.append(action)
+
+        # if there are a different amount of new actions that
+        # original actions, it means we have pruned some actions
+        # and therefore we are not in the optimal state
+        pruned = len(self.actions) != len(new_actions)
         self.actions = new_actions
+        return pruned
 
     def print_state(self):
         print()

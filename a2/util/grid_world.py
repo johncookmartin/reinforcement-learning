@@ -15,6 +15,7 @@ class GridWorld:
 
         self.states = []
         self.k = 0
+        self.i = 0
         self.delta = 0
 
     def create_states(self, bellman_data):
@@ -66,36 +67,24 @@ class GridWorld:
         for state in self.states:
             state.initialize_actions()
 
-    def perform_policy_sweep(self):
-        # initialize the state actions using p_one, p_two, reward and discount
-        delta = Decimal(0)
-        for state in self.states:
-            # this method calculates the new values for states
-            state.iterate_policy()
-            delta = max(delta, state.value - state.new_value)
-        for state in self.states:
-            # this method updates the value of states with new values
-            # must do this seperately so that we still have the old
-            # values when doing the calculations
-            state.record_policy()
-        self.k += 1
-        self.delta = delta
-
-    def greedify(self):
-        for state in self.states:
-            state.greedify()
-
     def perform_policy_iteration(self):
-        while self.delta > self.accuracy or self.k == 0:
-            self.perform_policy_sweep()
+        still_pruning = True
+        while still_pruning:
+            self.i += 1
+            self.reset_states()
+            self.perform_policy_evaluation()
+            still_pruning = self.perform_policy_improvement()
 
     def perform_value_iteration(self):
         while self.delta > self.accuracy or self.k == 0:
-            self.perform_policy_sweep()
-            self.greedify()
+            self.i += 1
+            self.delta = self.perform_policy_sweep()
+            self.k += 1
+            self.perform_policy_improvement()
 
-    def print_grid(self, include_actions=False):
-        print(f"GRID {self.size}      k = {self.k}")
+    # print the grid with values and policies
+    def print_grid(self):
+        print(f"GRID {self.size}      k = {self.k}      i = {self.i}")
         print("-" * 25)
         print()
         print("VALUES:")
@@ -105,18 +94,56 @@ class GridWorld:
             indicator = "**" if state.reward_state else str(state.index)
             print(f"{indicator:>2}: {state.value:.2f}", end=" ")
         print()
-        if include_actions:
-            print()
-            print("ACTIONS")
-            for i, state in enumerate(self.states):
-                if i % self.dimension == 0 and i > 0:
-                    print()
+        print("ACTIONS")
+        for i, state in enumerate(self.states):
+            if i % self.dimension == 0 and i > 0:
+                print()
 
-                if not state.reward_state and state.actions:
-                    actions_str = "".join(
-                        [action.action.name[0] for action in state.actions]
-                    )
-                    print(f"[{actions_str:4}]", end=" ")
-                else:
-                    print("[TERM]", end=" ")
-            print()
+            if not state.reward_state and state.actions:
+                actions_str = "".join(
+                    [action.action.name[0] for action in state.actions]
+                )
+                print(f"[{actions_str:4}]", end=" ")
+            else:
+                print("[TERM]", end=" ")
+        print()
+
+    # reset state values so that we can perform another loop of the policy iteration
+    def reset_states(self):
+        for state in self.states:
+            state.value = 0
+
+    # make one policy sweep through all states and record delta
+    def perform_policy_sweep(self):
+        delta = 0
+        for state in self.states:
+            # calculate the new values
+            state.evaluate_policy()
+            delta = max(delta, state.value - state.new_value)
+        for state in self.states:
+            # now we update the value of states with new values
+            # must do this seperately so that we still have the old
+            # values when doing the calculations
+            state.value = state.new_value
+        return delta
+
+    # find stable policy as part of policy iteration
+    def perform_policy_evaluation(self):
+        # initialize the state actions using p_one, p_two, reward and discount
+        self.delta = Decimal(0)
+        local_k = 0
+        self.k = 0
+        while self.delta > self.accuracy or local_k == 0:
+            self.delta = self.perform_policy_sweep()
+            local_k += 1
+            self.k += 1
+
+    # use greedy algorithm to choose optimal actions based on policy
+    # if no actions are pruned then policy is stable
+    def perform_policy_improvement(self):
+        still_pruning = False
+        for state in self.states:
+            pruned = state.greedify()
+            if pruned:
+                still_pruning = True
+        return still_pruning
