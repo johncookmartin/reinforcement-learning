@@ -41,6 +41,7 @@ class AdditionData(NamedTuple):
     digit_one: list[int]
     digit_two: list[int]
     answer: list[int]
+    discount: float
 
 
 class AdditionActionData(NamedTuple):

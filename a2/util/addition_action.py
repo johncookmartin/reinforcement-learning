@@ -1,7 +1,6 @@
 import copy
 from decimal import Decimal
 from typing import List
-from util.addition_state import AdditionState
 from util.interfaces import AdditionActionData, AdditionData
 
 
@@ -17,16 +16,14 @@ class AdditionAction:
         self.i, self.j, self.k, self.s = action_data
 
         self.reward = 0
-        new_sum, new_carry, new_attempted_s = self.calculate_action(
+        self.new_sum, self.new_carry, self.new_attempted_s = self.calculate_action(
             addition_data, carry, sum, attempted_s
         )
 
-        self.result_state = AdditionState(
-            addition_data, new_sum, new_carry, new_attempted_s
-        )
+        self.result_state = None
 
     def calculate_action(self, addition_data, carry, sum, attempted_s):
-        digit_one, digit_two, answer = addition_data
+        digit_one, digit_two, answer, discount = addition_data
 
         # this digit of the sum has already been calculated
         # give this a high penalty to prevent loops

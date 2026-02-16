@@ -1,7 +1,7 @@
 import argparse
 
 from util.addition_world import AdditionWorld
-from util.interfaces import DigitInput
+from util.interfaces import DigitData
 
 
 def get_digit(digit_name):
@@ -37,7 +37,7 @@ def main(args):
     print("would you like to enter custom digits?(Y/N):")
     response = input()
     if response.upper() == "Y":
-        digit_input = DigitInput(
+        digit_input = DigitData(
             digit_one=get_digit("digit 1"), digit_two=get_digit("digit 2")
         )
 

@@ -12,18 +12,18 @@ class AdditionWorld:
 
         digit_one, digit_two = self.set_digits(digit_data)
         add_state_input = AdditionData(
-            digit_one=digit_one,
-            digit_two=digit_two,
-            answer=self.get_answer(digit_one, digit_two),
+            digit_one,
+            digit_two,
+            self.get_answer(digit_one, digit_two),
+            discount,
         )
         self.root_state = AdditionState(
             add_state_input,
             # adding extra zero to the carry and sum in case
             # final carry is needed
-            sum=[0 for _ in range(digits + 1)],
-            carry=[0 for _ in range(digits + 1)],
+            [0 for _ in range(digits + 1)],
+            [0 for _ in range(digits + 1)],
             attempted_s=[False for _ in range(digits + 1)],
-            discount=discount,
         )
 
     def normalize_digits(self, digit_one: List[int], digit_two: List[int]):
