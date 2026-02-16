@@ -1,13 +1,13 @@
 from decimal import Decimal
 from util.interfaces import AdjacentStates
-from util.grid_action import Action
+from util.grid_action import GridAction
 
 
 def policy_evaluation_backup_summand(prob_action, prob_result, reward, discount, state):
     return prob_action * prob_result * (reward + discount * state)
 
 
-class State:
+class GridState:
     def __init__(self, i, bellman_data, reward_state=False):
         self.index = i
         self.bellman_data = bellman_data
@@ -33,16 +33,16 @@ class State:
             return
 
         self.actions.append(
-            Action(AdjacentStates.TOP, self, self.neighbours, self.bellman_data)
+            GridAction(AdjacentStates.TOP, self, self.neighbours, self.bellman_data)
         )
         self.actions.append(
-            Action(AdjacentStates.BOTTOM, self, self.neighbours, self.bellman_data)
+            GridAction(AdjacentStates.BOTTOM, self, self.neighbours, self.bellman_data)
         )
         self.actions.append(
-            Action(AdjacentStates.RIGHT, self, self.neighbours, self.bellman_data)
+            GridAction(AdjacentStates.RIGHT, self, self.neighbours, self.bellman_data)
         )
         self.actions.append(
-            Action(AdjacentStates.LEFT, self, self.neighbours, self.bellman_data)
+            GridAction(AdjacentStates.LEFT, self, self.neighbours, self.bellman_data)
         )
 
     def iterate_policy(self):

@@ -2,7 +2,7 @@ from decimal import Decimal
 import random
 
 from util.interfaces import AdjacentStates, GridWorldPayload
-from util.grid_state import State
+from util.grid_state import GridState
 
 
 class GridWorld:
@@ -21,10 +21,10 @@ class GridWorld:
         # populate the dict with states
         for i in range(self.size):
             if i not in self.reward_states:
-                self.states.append(State(i, bellman_data))
+                self.states.append(GridState(i, bellman_data))
             else:
                 # populate reward state in proper place
-                self.states.append(State(i, bellman_data, reward_state=True))
+                self.states.append(GridState(i, bellman_data, reward_state=True))
 
     def join_states(self):
         for i in range(self.size):

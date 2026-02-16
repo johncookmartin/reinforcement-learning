@@ -2,7 +2,7 @@ from decimal import Decimal
 from util.interfaces import AdjacentStates
 
 
-class Action:
+class GridAction:
     def __init__(self, action, state, neighbours, bellman_data):
         self.action = action
         self.state = state

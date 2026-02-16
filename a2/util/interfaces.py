@@ -1,6 +1,8 @@
 from enum import Enum
 from typing import List, NamedTuple
 
+### Grid world interfaces
+
 
 class GridWorldPayload(NamedTuple):
     dimensions: int
@@ -25,3 +27,24 @@ class AdjacentStates(Enum):
     BOTTOM_LEFT = 6
     BOTTOM = 7
     BOTTOM_RIGHT = 8
+
+
+### addition world interfaces
+
+
+class DigitData(NamedTuple):
+    digit_one: List[int]
+    digit_two: List[int]
+
+
+class AdditionData(NamedTuple):
+    digit_one: list[int]
+    digit_two: list[int]
+    answer: list[int]
+
+
+class AdditionActionData(NamedTuple):
+    i: int
+    j: int
+    k: int
+    s: int
