@@ -5,6 +5,7 @@ from util.addition_world import AdditionWorld
 
 def main(args):
 
+    print()
     print("Using Policy Iteration:")
     policy_addition_world = AdditionWorld(
         args.digits, args.discount, args.accuracy, args.seed
@@ -12,6 +13,7 @@ def main(args):
     policy_addition_world.perform_policy_iteration()
     policy_addition_world.produce_sum()
 
+    print()
     print("Using Value Iteration:")
     value_addition_world = AdditionWorld(
         args.digits, args.discount, args.accuracy, args.seed
