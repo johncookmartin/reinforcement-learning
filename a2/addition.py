@@ -6,8 +6,9 @@ from util.addition_world import AdditionWorld
 def main(args):
 
     addition_world = AdditionWorld(args.digits, args.discount, args.accuracy, args.seed)
-    addition_world.perform_value_iteration()
-    print("completed")
+    addition_world.perform_policy_iteration()
+    # addition_world.perform_value_iteration()
+    addition_world.produce_sum()
 
 
 if __name__ == "__main__":

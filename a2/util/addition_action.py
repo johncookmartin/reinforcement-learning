@@ -14,8 +14,8 @@ class AdditionAction:
         self.addition_payload = addition_payload
         self.discount = discount
 
-        self.reward = self.calculate_reward()
         self.result = None
+        self.reward = self.calculate_reward()
 
         self.result_state = None
         self.value = 0
@@ -25,19 +25,22 @@ class AdditionAction:
         total = (
             self.addition_payload.digit_one[i]
             + self.addition_payload.digit_two[j]
-            + self.addition_payload.carry[k]
+            + self.addition_payload.carry_answer[k]
         )
         sum = total % 10
 
         if self.addition_payload.answer[s] != sum:
-            return -1
+            return -2.5
 
-        reward = -0.5
+        reward = -1
+        if self.addition_payload.sum[s] is not None:
+            reward -= 0.5
+
         if not self.in_order(s):
             reward -= 0.5
 
         if k == i == j == s:
-            reward += 0.5
+            reward += 1
 
         new_result = copy.copy(self.addition_payload.sum)
         new_result[s] = sum
@@ -46,12 +49,9 @@ class AdditionAction:
 
     def in_order(self, s):
         for i in range(len(self.addition_payload.sum)):
-            value = self.addition_payload.sum[i]
-            if value is not None and i < s:
-                continue
-            else:
-                return False
-        return True
+            if self.addition_payload.sum[i] is None:
+                break
+        return i == s
 
     def calculate_action_value(self, prob):
         r = Decimal(str(self.reward))

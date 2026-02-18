@@ -5,6 +5,7 @@ class ErrorState:
     def __init__(self):
         self.value = 0
         self.new_value = 0
+        self.sum = "Error"
 
     def evaluate_policy(self):
         # no matter what agent does in this state, the answer is wrong and reward is -1

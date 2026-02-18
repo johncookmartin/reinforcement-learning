@@ -27,6 +27,10 @@ class AdditionState:
         return mask
 
     def initialize_actions(self, states, error_state, discount):
+        # we are in the terminal state
+        if None not in self.sum:
+            return
+
         for i in range(len(self.digit_one)):
             for j in range(len(self.digit_two)):
                 for k in range(len(self.carry)):
@@ -43,13 +47,15 @@ class AdditionState:
     def evaluate_policy(self):
         # check to make sure we are not in the terminal state
         # if sum is full then we are done and value can remain 0
-        if None in self.sum:
-            total_value = 0
-            prob = Decimal(1 / len(self.actions))
-            for action in self.actions:
-                total_value += action.calculate_action_value(prob)
+        if None not in self.sum:
+            return
 
-            self.new_value = total_value
+        total_value = 0
+        prob = Decimal(1 / len(self.actions))
+        for action in self.actions:
+            total_value += action.calculate_action_value(prob)
+
+        self.new_value = total_value
 
     def greedify(self):
         new_actions = []

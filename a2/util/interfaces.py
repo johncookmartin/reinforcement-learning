@@ -37,8 +37,8 @@ class AdditionData(NamedTuple):
     carry: List[int]
     digit_one: List[int]
     digit_two: List[int]
-    carry_answer: List[int]
     answer: List[int]
+    carry_answer: List[int]
 
 
 class AdditionActionData(NamedTuple):

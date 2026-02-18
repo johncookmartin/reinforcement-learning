@@ -167,6 +167,24 @@ class AdditionWorld:
 
     def produce_sum(self):
         current_state = self.states[0]
+        print(f"adding:")
+        str_digit_one = "".join(map(str, reversed(self.digit_one)))
+        str_digit_two = "".join(map(str, reversed(self.digit_two)))
+        print(f"  {str_digit_one}")
+        print(f"+ {str_digit_two}")
+        print("---------------")
         for i in range(self.digits + 1):
-            action = current_state.actions[0]
             print()
+            action = current_state.actions[0]
+            i = action.action_payload.i
+            j = action.action_payload.j
+            k = action.action_payload.k
+            print(f"adding {self.digit_one[i]} to {self.digit_two[j]}")
+            if self.carry_answer[k] == 1:
+                print("adding carry")
+
+            next_state = action.result_state
+            str_sum = "".join(map(str, reversed(next_state.sum)))
+            print()
+            print(f"result: {str_sum}")
+            current_state = next_state
