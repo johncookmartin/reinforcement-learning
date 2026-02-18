@@ -9,10 +9,12 @@ class AdditionAction:
         action_payload: AdditionActionData,
         addition_payload: AdditionData,
         discount: float,
+        force_order: bool,
     ):
         self.action_payload = action_payload
         self.addition_payload = addition_payload
         self.discount = discount
+        self.force_order = force_order
 
         self.result = None
         self.reward = self.calculate_reward()
@@ -42,7 +44,7 @@ class AdditionAction:
             reward -= 0.5
 
         # this penalizes the agent for adding a sum in the wrong order
-        if not self.in_order(s):
+        if not self.in_order(s) and self.force_order:
             reward -= 0.5
 
         # this rewards the agent for adding the correct sums together

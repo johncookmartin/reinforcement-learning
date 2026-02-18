@@ -26,7 +26,7 @@ class AdditionState:
                 mask |= 1 << i
         return mask
 
-    def initialize_actions(self, states, error_state, discount):
+    def initialize_actions(self, states, error_state, discount, force_order):
         # all sums have been added, no more actions needed because this is the terminal state
         if None not in self.sum:
             return
@@ -37,7 +37,9 @@ class AdditionState:
                     # agent can go back and forth, adding any sum it wants
                     for s in range(len(self.sum)):
                         action_data = AdditionActionData(i, j, k, s)
-                        action = AdditionAction(action_data, self.payload, discount)
+                        action = AdditionAction(
+                            action_data, self.payload, discount, force_order
+                        )
                         # if the action doesn't have a result, the sum attempt was invalid
                         # this action will lead to the error state
                         if action.result is None:

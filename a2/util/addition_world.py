@@ -8,7 +8,14 @@ from util.addition_state import AdditionState
 
 
 class AdditionWorld:
-    def __init__(self, digits: int, discount: float, accuracy: float, seed: int):
+    def __init__(
+        self,
+        digits: int,
+        discount: float,
+        accuracy: float,
+        seed: int,
+        force_order: bool,
+    ):
         self.rng = random.Random(seed)
         self.digits = digits
         self.accuracy = accuracy
@@ -29,7 +36,7 @@ class AdditionWorld:
         self.error_state = ErrorState()
         self.states = {}
         self.initialize_states()
-        self.initialize_actions()
+        self.initialize_actions(force_order)
 
         self.i = 0
         self.k = 0
@@ -64,10 +71,12 @@ class AdditionWorld:
             )
 
     # once the states are created we initialize the actions
-    def initialize_actions(self):
+    def initialize_actions(self, force_order):
         actions = 0
         for state in self.states.values():
-            state.initialize_actions(self.states, self.error_state, self.discount)
+            state.initialize_actions(
+                self.states, self.error_state, self.discount, force_order
+            )
             actions += len(state.actions)
 
     def reset_states(self):
@@ -127,27 +136,28 @@ class AdditionWorld:
         print(f"converged after {self.k} sweeps and {self.i} iterations")
         print()
         print(f"adding:")
-        str_digit_one = "".join(map(str, reversed(self.digit_one)))
-        str_digit_two = "".join(map(str, reversed(self.digit_two)))
+        str_digit_one = " ".join(map(str, reversed(self.digit_one)))
+        str_digit_two = " ".join(map(str, reversed(self.digit_two)))
         print(f"  {str_digit_one}")
         print(f"+ {str_digit_two}")
         print("---------------")
+        print()
         for i in range(self.digits + 1):
             action = self.rng.choice(current_state.actions)
             i = action.action_payload.i
             j = action.action_payload.j
             k = action.action_payload.k
-            print(f"of possible: {len(current_state.actions)} actions")
-            print(
-                f"adding {self.digit_one[i]} from digit 1 index {i} to {self.digit_two[j]} from digit 2 index {j}"
-            )
+            print(f"adding index {i} to index {j}")
             if self.carry_answer[k] == 1:
-                print(f"adding carry from {k}")
+                print(f"adding carry from index {k}")
 
             next_state = action.result_state
-            str_sum = "".join(map(str, reversed(next_state.sum)))
+            str_sum = " ".join(map(str, reversed(next_state.sum))).replace("None", " ")
+            print(f"         {str_digit_one}")
+            print(f"       + {str_digit_two}")
+            print("       ---------------")
+            print(f"result: [{str_sum}]")
             print()
-            print(f"result: {str_sum}")
             current_state = next_state
 
     ###################################
@@ -190,6 +200,7 @@ class AdditionWorld:
             digit_two.append(self.rng.randint(1, 9))
         else:
             digit_one, digit_two = input
+            self.digits = max(len(digit_one), len(digit_two))
         self.normalize_digits(digit_one, digit_two)
         return (digit_one, digit_two)
 
