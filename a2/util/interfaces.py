@@ -32,16 +32,13 @@ class AdjacentStates(Enum):
 ### addition world interfaces
 
 
-class DigitData(NamedTuple):
+class AdditionData(NamedTuple):
+    sum: List[int]
+    carry: List[int]
     digit_one: List[int]
     digit_two: List[int]
-
-
-class AdditionData(NamedTuple):
-    digit_one: list[int]
-    digit_two: list[int]
-    answer: list[int]
-    discount: float
+    carry_answer: List[int]
+    answer: List[int]
 
 
 class AdditionActionData(NamedTuple):

@@ -114,7 +114,7 @@ class GridWorld:
 
     # make one policy sweep through all states and record delta
     def perform_policy_sweep(self):
-        delta = 0
+        delta = Decimal(0)
         for state in self.states:
             # calculate the new values
             state.evaluate_policy()

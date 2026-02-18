@@ -28,7 +28,7 @@ if __name__ == "__main__":
     parser.add_argument("--p_one", type=float, default=0.8)
     parser.add_argument("--p_two", type=float, default=0.1)
     parser.add_argument("--reward", type=float, default=-1)
-    parser.add_argument("--discount", type=float, default=0.9)
+    parser.add_argument("--discount", type=float, default=0.95)
     parser.add_argument("--accuracy", type=float, default=0.001)
     parser.add_argument("--reward_states", type=int, nargs="+", default=[0, 15])
 

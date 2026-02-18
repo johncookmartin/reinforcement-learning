@@ -1,82 +1,63 @@
 import copy
 from decimal import Decimal
-from typing import List
 from util.interfaces import AdditionActionData, AdditionData
 
 
 class AdditionAction:
     def __init__(
         self,
-        action_data: AdditionActionData,
-        addition_data: AdditionData,
-        carry: List[int],
-        sum: List[int],
-        attempted_s: List[bool],
+        action_payload: AdditionActionData,
+        addition_payload: AdditionData,
+        discount: float,
     ):
-        self.i, self.j, self.k, self.s = action_data
+        self.action_payload = action_payload
+        self.addition_payload = addition_payload
+        self.discount = discount
 
-        self.reward = 0
-        self.new_sum, self.new_carry, self.new_attempted_s = self.calculate_action(
-            addition_data, carry, sum, attempted_s
-        )
+        self.reward = self.calculate_reward()
+        self.result = None
 
         self.result_state = None
+        self.value = 0
 
-    def calculate_action(self, addition_data, carry, sum, attempted_s):
-        digit_one, digit_two, answer, discount = addition_data
+    def calculate_reward(self):
+        i, j, k, s = self.action_payload
+        total = (
+            self.addition_payload.digit_one[i]
+            + self.addition_payload.digit_two[j]
+            + self.addition_payload.carry[k]
+        )
+        sum = total % 10
 
-        # this digit of the sum has already been calculated
-        # give this a high penalty to prevent loops
-        if attempted_s[self.s]:
-            # result state is the same as origin state
-            self.reward = -4
-            return (sum, carry, attempted_s)
+        if self.addition_payload.answer[s] != sum:
+            return -1
 
-        temp_sum = digit_one[self.i] + digit_two[self.j] + carry[self.k]
-        new_s = temp_sum % 10
-        c = temp_sum // 10
+        reward = -0.5
+        if not self.in_order(s):
+            reward -= 0.5
 
-        # attempted to place a sum in most significant
-        # digit position that required a carry. This
-        # shouldn't be possible and will cause an error
-        # this gets a very high penalty
-        if self.s >= len(digit_one) - 1 and c > 0:
-            # this will cause error, we don't make a change
-            # to the state
-            self.reward = -5
-            return (sum, carry, attempted_s)
+        if k == i == j == s:
+            reward += 0.5
 
-        new_carry = copy.copy(carry)
-        new_sum = copy.copy(sum)
-        new_attempted_s = copy.copy(attempted_s)
+        new_result = copy.copy(self.addition_payload.sum)
+        new_result[s] = sum
+        self.result = new_result
+        return reward
 
-        if c > 0:
-            new_carry[self.s + 1] = c
-        new_sum[self.s] = new_s
-        new_attempted_s[self.s] = True
-
-        if self.i == self.j == self.k:
-            # added the correct digits together
-            if new_s == answer[self.s]:
-                # got the correct sum
-                self.reward = 1
+    def in_order(self, s):
+        for i in range(len(self.addition_payload.sum)):
+            value = self.addition_payload.sum[i]
+            if value is not None and i < s:
+                continue
             else:
-                # didn't get the correct sum
-                self.reward = 0
-        else:
-            # didn't add the correct digits together
-            if self.i == self.j or self.i == self.k or self.j == self.k:
-                # added some of the correct digits together
-                self.reward = -0.5
-            else:
-                # added none of the correct digits together
-                self.reward = -1
-        return (new_sum, new_carry, new_attempted_s)
+                return False
+        return True
 
-    def calculate_action_value(self):
-        r = Decimal((str(self.reward)))
-        d = Decimal((str(self.addition_data.discount)))
-        v = Decimal((str(self.result_state.value)))
-        p = 1
+    def calculate_action_value(self, prob):
+        r = Decimal(str(self.reward))
+        d = Decimal(str(self.discount))
+        v = Decimal(str(self.result_state.value))
+        p = Decimal(str(prob))
         result = p * (r + d * v)
+        self.value = result
         return result

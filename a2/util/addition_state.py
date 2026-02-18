@@ -1,67 +1,73 @@
-import copy
 from decimal import Decimal
-from typing import List
-
 from util.addition_action import AdditionAction
-from util.interfaces import AdditionActionData, AdditionData
+from util.interfaces import (
+    AdditionActionData,
+    AdditionData,
+)
 
 
 class AdditionState:
-    def __init__(
-        self,
-        addition_data: AdditionData,
-        state_sum: List[int],
-        state_carry: List[int],
-        attempted_s: List[bool],
-        attempts: int = 0,
-    ):
-        self.addition_data = addition_data
-        self.sum = state_sum
-        self.carry = state_carry
-        self.attempted_s = attempted_s
-        self.attempts = attempts
+    def __init__(self, payload: AdditionData):
+        self.payload = payload
+        self.sum = payload.sum
+        self.digit_one = payload.digit_one
+        self.digit_two = payload.digit_two
+        self.carry = payload.carry
+        self.actions = []
 
         self.value = 0
+        self.new_value = 0
 
-        self.actions = []
-        self.initialize_actions()
+    def get_mask(self, sum=None):
+        s = sum if sum is not None else self.sum
+        mask = 0
+        for i, v in enumerate(s):
+            if v is not None:
+                mask |= 1 << i
+        return mask
 
-    def initialize_actions(self):
-        # we are in the terminal state
-        if self.attempts > len(self.sum):
-            return
-
-        digit_one = self.addition_data.digit_one
-        digit_two = self.addition_data.digit_two
-        for i in range(len(digit_one)):
-            for j in range(len(digit_two)):
+    def initialize_actions(self, states, error_state, discount):
+        for i in range(len(self.digit_one)):
+            for j in range(len(self.digit_two)):
                 for k in range(len(self.carry)):
                     for s in range(len(self.sum)):
                         action_data = AdditionActionData(i, j, k, s)
-                        action = AdditionAction(
-                            action_data,
-                            self.addition_data,
-                            self.carry,
-                            self.sum,
-                            self.attempted_s,
-                        )
+                        action = AdditionAction(action_data, self.payload, discount)
+                        if action.result is None:
+                            action.result_state = error_state
+                        else:
+                            mask = self.get_mask(action.result)
+                            action.result_state = states[mask]
                         self.actions.append(action)
 
-    def perform_sweep(self):
-        total_value = 0
-        prob = 1 / len(self.actions)
+    def evaluate_policy(self):
+        # check to make sure we are not in the terminal state
+        # if sum is full then we are done and value can remain 0
+        if None in self.sum:
+            total_value = 0
+            prob = Decimal(1 / len(self.actions))
+            for action in self.actions:
+                total_value += action.calculate_action_value(prob)
+
+            self.new_value = total_value
+
+    def greedify(self):
+        new_actions = []
+        max_value = None
         for action in self.actions:
-            total_value += prob * action.calculate_action_value()
+            if max_value is None:
+                max_value = action.value
+                new_actions.append(action)
+            elif action.value == max_value:
+                new_actions.append(action)
+            elif action.value > max_value:
+                new_actions = []
+                max_value = action.value
+                new_actions.append(action)
 
-        self.value = total_value
-
-    def get_result_state(self, action):
-        if self.action.result is None:
-            self.action.result = AdditionState(
-                self.addition_data,
-                action.new_sum,
-                action.new_carry,
-                action.new_attemptes_s,
-                self.attempts + 1,
-            )
-        return self.action.result
+        # if there are a different amount of new actions that
+        # original actions, it means we have pruned some actions
+        # and therefore we are not in the optimal state
+        pruned = len(self.actions) != len(new_actions)
+        self.actions = new_actions
+        return pruned
