@@ -5,10 +5,19 @@ from util.addition_world import AdditionWorld
 
 def main(args):
 
-    addition_world = AdditionWorld(args.digits, args.discount, args.accuracy, args.seed)
-    addition_world.perform_policy_iteration()
-    # addition_world.perform_value_iteration()
-    addition_world.produce_sum()
+    print("Using Policy Iteration:")
+    policy_addition_world = AdditionWorld(
+        args.digits, args.discount, args.accuracy, args.seed
+    )
+    policy_addition_world.perform_policy_iteration()
+    policy_addition_world.produce_sum()
+
+    print("Using Value Iteration:")
+    value_addition_world = AdditionWorld(
+        args.digits, args.discount, args.accuracy, args.seed
+    )
+    value_addition_world.perform_value_iteration()
+    value_addition_world.produce_sum()
 
 
 if __name__ == "__main__":

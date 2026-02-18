@@ -25,24 +25,27 @@ class AdditionAction:
         total = (
             self.addition_payload.digit_one[i]
             + self.addition_payload.digit_two[j]
-            + self.addition_payload.carry_answer[k]
+            + self.addition_payload.carry[k]
         )
         sum = total % 10
 
+        # if the sum is incorrect, all subsequent actions will be
+        # incorrect. agent gets -2 reward and goes to error state
         if self.addition_payload.answer[s] != sum:
             return -1
 
-        # check if we need to have a carry, and if yes, if the carry has been produced
-        if self.carry_dependency_error(s, k):
-            return -1
-
-        reward = -1
+        # initialize reward to zero so we can stack various rewards
+        # max penalty is - 2 but if agent recieves no penalty reward is 0
+        reward = 0
+        # this penalizes the agent for calculating the same sum multiple times
         if self.addition_payload.sum[s] is not None:
             reward -= 0.5
 
+        # this penalizes the agent for adding a sum in the wrong order
         if not self.in_order(s):
             reward -= 0.5
 
+        # this rewards the agent for adding the correct sums together
         if k == i == j == s:
             reward += 1
 
@@ -56,12 +59,6 @@ class AdditionAction:
             if self.addition_payload.sum[i] is None:
                 break
         return i == s
-
-    def carry_dependency_error(self, s, k):
-        if self.addition_payload.carry_answer[k] != 1:
-            return False
-
-        return self.addition_payload.sum[s - 1] is not None
 
     def calculate_action_value(self, prob):
         r = Decimal(str(self.reward))
