@@ -131,7 +131,6 @@ class GridWorld:
         # initialize the state actions using p_one, p_two, reward and discount
         self.delta = Decimal(0)
         local_k = 0
-        self.k = 0
         while self.delta > self.accuracy or local_k == 0:
             self.delta = self.perform_policy_sweep()
             local_k += 1
