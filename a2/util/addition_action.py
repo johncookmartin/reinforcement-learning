@@ -30,7 +30,11 @@ class AdditionAction:
         sum = total % 10
 
         if self.addition_payload.answer[s] != sum:
-            return -2.5
+            return -1
+
+        # check if we need to have a carry, and if yes, if the carry has been produced
+        if self.carry_dependency_error(s, k):
+            return -1
 
         reward = -1
         if self.addition_payload.sum[s] is not None:
@@ -52,6 +56,12 @@ class AdditionAction:
             if self.addition_payload.sum[i] is None:
                 break
         return i == s
+
+    def carry_dependency_error(self, s, k):
+        if self.addition_payload.carry_answer[k] != 1:
+            return False
+
+        return self.addition_payload.sum[s - 1] is not None
 
     def calculate_action_value(self, prob):
         r = Decimal(str(self.reward))
