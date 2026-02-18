@@ -48,8 +48,11 @@ class AdditionAction:
             reward -= 0.5
 
         # this rewards the agent for adding the correct sums together
+        if k == i == j:
+            reward += 0.5
+
         if k == i == j == s:
-            reward += 1
+            reward += 0.5
 
         new_result = copy.copy(self.addition_payload.sum)
         new_result[s] = sum
