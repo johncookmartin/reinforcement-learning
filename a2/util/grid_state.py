@@ -1,4 +1,4 @@
-from decimal import Decimal
+from decimal import ROUND_HALF_UP, Decimal
 from util.interfaces import AdjacentStates
 from util.grid_action import GridAction
 
@@ -64,15 +64,19 @@ class GridState:
     def greedify(self):
         new_actions = []
         max_value = None
+        # adding precision to remove floating point errors in comparisons
+        precision = Decimal("0.00000000001")
         for action in self.actions:
+            rounded_value = action.value.quantize(precision, rounding=ROUND_HALF_UP)
+
             if max_value is None:
-                max_value = action.value
+                max_value = rounded_value
                 new_actions.append(action)
-            elif action.value == max_value:
+            elif rounded_value == max_value:
                 new_actions.append(action)
-            elif action.value > max_value:
+            elif rounded_value > max_value:
                 new_actions = []
-                max_value = action.value
+                max_value = rounded_value
                 new_actions.append(action)
 
         # if there are a different amount of new actions that
