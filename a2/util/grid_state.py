@@ -8,15 +8,20 @@ def policy_evaluation_backup_summand(prob_action, prob_result, reward, discount,
 
 
 class GridState:
-    def __init__(self, i, bellman_data, reward_state=False):
+    def __init__(self, i, bellman_data, terminal_state=False, wall_state="None"):
         self.index = i
         self.bellman_data = bellman_data
-        self.reward_state = reward_state
+        self.terminal_state = terminal_state
+        self.wall_state = wall_state
 
         # initialize value to 0
-        self.value = Decimal(0)
-        # initialize new value to 0 (k+1)
-        self.new_value = Decimal(0)
+        self.initial_value = (
+            Decimal(0)
+            if not terminal_state
+            else Decimal(self.bellman_data.terminal_reward)
+        )
+        self.value = self.initial_value
+        self.new_value = 0
 
         self.neighbours = [None] * 9
         self.actions = []
@@ -29,7 +34,7 @@ class GridState:
     # adjacent to the target
     def initialize_actions(self):
         # no need to calculate actions for the terminal state
-        if self.reward_state:
+        if self.terminal_state:
             return
 
         self.actions.append(
@@ -47,7 +52,7 @@ class GridState:
 
     # calculate (v)k + 1 for current state and store value in new_value
     def evaluate_policy(self):
-        if self.reward_state:
+        if self.terminal_state:
             # we are in the terminal state, no need to further iterate
             return
 

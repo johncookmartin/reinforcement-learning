@@ -1,15 +1,21 @@
-from decimal import Decimal
+from random import Random
 from util.interfaces import AdjacentStates
 
 
 class GridAction:
-    def __init__(self, action, state, neighbours, bellman_data):
+    def __init__(
+        self,
+        action,
+        state,
+        neighbours,
+        agent_data,
+    ):
+        self.rng = Random(agent_data.seed)
         self.action = action
         self.state = state
         self.target = self.get_target(neighbours)
         self.adjacent_states = self.get_adjacent_states(neighbours)
-        self.bellman_data = bellman_data
-        self.value = 0
+        self.agent_data = agent_data
 
     # if target is None, this action will result in agent returning to
     # original state
@@ -54,43 +60,15 @@ class GridAction:
             options.append(self.target)
         return options
 
-    def calculate_action_value(self, prob):
-        # add target and self values
-        target_value = self.state_reward_summand(self.bellman_data.p_one, self.target)
-        self_value = self.state_reward_summand(self.bellman_data.p_two, self.state)
-
-        # add target adjacent state values
-        adjacent_value = 0
+    def take_action(self):
+        results_list = [self.target, self.state]
+        weights = [self.agent_data.p_one, self.agent_data.p_two]
         d = len(self.adjacent_states)
         if d > 0:
-            p_three = (1 - self.bellman_data.p_one - self.bellman_data.p_two) / d
+            p_three = (1 - self.agent_data.p_one - self.agent_data.p_two) / d
             for adjacent_state in self.adjacent_states:
-                adjacent_value += self.state_reward_summand(p_three, adjacent_state)
+                results_list.append(adjacent_state)
+                weights.append(p_three)
 
-        summation = target_value + self_value + adjacent_value
-        self.value = Decimal(prob) * summation
-        return self.value
-
-    # calculate the prob of state result * reward plus discount times previous value of
-    # result state
-    def state_reward_summand(self, prob, state):
-        r = Decimal(
-            str(
-                self.bellman_data.reward
-                if not state.terminal_state
-                else self.bellman_data.terminal_reward
-            )
-        )
-        d = Decimal(str(self.bellman_data.discount))
-        v = Decimal(str(state.value))
-        p = Decimal(str(prob))
-        result = p * (r + d * v)
-        return result
-
-    def print_action(self):
-        print(f"{self.action.name}")
-        print("-" * 10)
-        print(f"value: {self.value}")
-        print(f"target: {self.target.index}")
-        for state in self.adjacent_states:
-            print(f"adjacent: {state.index}")
+        picked = self.rng.choices(results_list, weights=weights, k=1)[0]
+        return picked

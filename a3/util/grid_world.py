@@ -47,14 +47,14 @@ class GridWorld:
         else:
             return "None"
 
-    def create_states(self, bellman_data):
+    def create_states(self, agent_data):
         # populate the dict with states
         for i in range(self.size):
             if i in self.terminal_states:
-                self.states.append(GridState(i, bellman_data, terminal_state=True))
+                self.states.append(GridState(i, agent_data, terminal_state=True))
             else:
                 self.states.append(
-                    GridState(i, bellman_data, wall_state=self.determine_wall_state(i))
+                    GridState(i, agent_data, wall_state=self.determine_wall_state(i))
                 )
 
     def join_states(self):
@@ -122,21 +122,6 @@ class GridWorld:
         for state in self.states:
             state.initialize_actions()
 
-    def perform_policy_iteration(self):
-        still_pruning = True
-        while still_pruning:
-            self.i += 1
-            self.reset_states()
-            self.perform_policy_evaluation()
-            still_pruning = self.perform_policy_improvement()
-
-    def perform_value_iteration(self):
-        while self.delta > self.accuracy or self.k == 0:
-            self.i += 1
-            self.delta = self.perform_policy_sweep()
-            self.k += 1
-            self.perform_policy_improvement()
-
     # print the grid with values and policies
     def print_grid(self):
         value_cells = []
@@ -183,42 +168,3 @@ class GridWorld:
                 )
                 print(f"[{actions_str:4}]", end=" ")
         print()
-
-    # reset state values so that we can perform another loop of the policy iteration
-    def reset_states(self):
-        for state in self.states:
-            state.value = state.initial_value
-
-    # make one policy sweep through all states and record delta
-    def perform_policy_sweep(self):
-        delta = Decimal(0)
-        for state in self.states:
-            # calculate the new values
-            state.evaluate_policy()
-            delta = max(delta, state.value - state.new_value)
-        for state in self.states:
-            # now we update the value of states with new values
-            # must do this seperately so that we still have the old
-            # values when doing the calculations
-            state.value = state.new_value
-        return delta
-
-    # find stable policy as part of policy iteration
-    def perform_policy_evaluation(self):
-        # initialize the state actions using p_one, p_two, reward and discount
-        self.delta = Decimal(0)
-        local_k = 0
-        while self.delta > self.accuracy or local_k == 0:
-            self.delta = self.perform_policy_sweep()
-            local_k += 1
-            self.k += 1
-
-    # use greedy algorithm to choose optimal actions based on policy
-    # if no actions are pruned then policy is stable
-    def perform_policy_improvement(self):
-        still_pruning = False
-        for state in self.states:
-            pruned = state.greedify()
-            if pruned:
-                still_pruning = True
-        return still_pruning

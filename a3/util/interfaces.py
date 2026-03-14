@@ -13,12 +13,14 @@ class GridWorldPayload(NamedTuple):
     doors: List[int]
 
 
-class BellmanData(NamedTuple):
+class AgentData(NamedTuple):
     p_one: float
     p_two: float
     discount: float
     reward: float
     terminal_reward: float
+    seed: int
+    max_episode_length: int
 
 
 class AdjacentStates(Enum):
@@ -31,22 +33,3 @@ class AdjacentStates(Enum):
     BOTTOM_LEFT = 6
     BOTTOM = 7
     BOTTOM_RIGHT = 8
-
-
-### addition world interfaces
-
-
-class AdditionData(NamedTuple):
-    sum: List[int]
-    carry: List[int]
-    digit_one: List[int]
-    digit_two: List[int]
-    answer: List[int]
-    carry_answer: List[int]
-
-
-class AdditionActionData(NamedTuple):
-    i: int
-    j: int
-    k: int
-    s: int
