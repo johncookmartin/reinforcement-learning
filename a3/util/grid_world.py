@@ -132,7 +132,9 @@ class GridWorld:
                 value_cells.append("WALL")
             else:
                 indicator = "**" if state.terminal_state else str(state.index)
-                value_cells.append(f"{indicator}: {state.value:.2f}")
+                value_cells.append(
+                    f"{indicator}: {state.policy_actions[0].value if state.policy_actions else 0:.2f}"
+                )
 
         value_cell_width = max(len(cell) for cell in value_cells)
 
@@ -164,7 +166,7 @@ class GridWorld:
                 print("[TERM]", end=" ")
             else:
                 actions_str = "".join(
-                    [action.action.name[0] for action in state.actions]
+                    [action.action.name[0] for action in state.policy_actions]
                 )
                 print(f"[{actions_str:4}]", end=" ")
         print()

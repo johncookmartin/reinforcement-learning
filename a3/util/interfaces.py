@@ -21,6 +21,7 @@ class AgentData(NamedTuple):
     terminal_reward: float
     seed: int
     max_episode_length: int
+    epsilon: float
 
 
 class AdjacentStates(Enum):

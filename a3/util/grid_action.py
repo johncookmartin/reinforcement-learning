@@ -1,3 +1,4 @@
+from decimal import Decimal
 from random import Random
 from util.interfaces import AdjacentStates
 
@@ -16,6 +17,9 @@ class GridAction:
         self.target = self.get_target(neighbours)
         self.adjacent_states = self.get_adjacent_states(neighbours)
         self.agent_data = agent_data
+        self.visits = 0
+        self.value = Decimal(0)
+        self.new_value = None
 
     # if target is None, this action will result in agent returning to
     # original state
@@ -72,3 +76,11 @@ class GridAction:
 
         picked = self.rng.choices(results_list, weights=weights, k=1)[0]
         return picked
+
+    def average_value(self, new_value):
+        self.visits += 1
+        old_value = self.value
+        self.value = self.value + (Decimal(1) / self.visits) * (
+            Decimal(new_value) - self.value
+        )
+        return abs(self.value - old_value)
