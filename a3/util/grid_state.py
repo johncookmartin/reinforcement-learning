@@ -43,32 +43,3 @@ class GridState:
             GridAction(AdjacentStates.LEFT, self, self.neighbours, self.agent_data)
         )
         self.weights = [0.25, 0.25, 0.25, 0.25]
-
-    def choose_action(self):
-        return self.rng.choices(self.actions, self.weights)[0]
-
-    def adjust_weights(self):
-        max_value = None
-        optimal_actions = 0
-        precision = Decimal("0.00000000001")
-        for action in self.actions:
-            rounded_value = action.value.quantize(precision, rounding=ROUND_HALF_UP)
-
-            if max_value is None:
-                max_value = rounded_value
-                optimal_actions = 1
-            elif rounded_value == max_value:
-                optimal_actions += 1
-            elif rounded_value > max_value:
-                max_value = rounded_value
-                optimal_actions = 1
-
-        self.policy_actions = []
-        for i in range(len(self.actions)):
-            action = self.actions[i]
-
-            if action.value.quantize(precision, rounding=ROUND_HALF_UP) == max_value:
-                self.policy_actions.append(action)
-                self.weights[i] = 1 - self.epsilon + self.epsilon / (len(self.actions))
-            else:
-                self.weights[i] = self.epsilon / len(self.actions)

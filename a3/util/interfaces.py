@@ -22,6 +22,7 @@ class AgentData(NamedTuple):
     seed: int
     max_episode_length: int
     epsilon: float
+    alpha: float
 
 
 class AdjacentStates(Enum):

@@ -27,6 +27,19 @@ class GridAction:
         target_state = neighbours[self.action.value]
         return target_state if target_state is not None else self.state
 
+    def take_action(self):
+        results_list = [self.target, self.state]
+        weights = [self.agent_data.p_one, self.agent_data.p_two]
+        d = len(self.adjacent_states)
+        if d > 0:
+            p_three = (1 - self.agent_data.p_one - self.agent_data.p_two) / d
+            for adjacent_state in self.adjacent_states:
+                results_list.append(adjacent_state)
+                weights.append(p_three)
+
+        picked = self.rng.choices(results_list, weights=weights, k=1)[0]
+        return picked
+
     # calculate adjacent states to target state
     def get_adjacent_states(self, neighbours):
         options = []
@@ -63,24 +76,3 @@ class GridAction:
         while len(options) < 2:
             options.append(self.target)
         return options
-
-    def take_action(self):
-        results_list = [self.target, self.state]
-        weights = [self.agent_data.p_one, self.agent_data.p_two]
-        d = len(self.adjacent_states)
-        if d > 0:
-            p_three = (1 - self.agent_data.p_one - self.agent_data.p_two) / d
-            for adjacent_state in self.adjacent_states:
-                results_list.append(adjacent_state)
-                weights.append(p_three)
-
-        picked = self.rng.choices(results_list, weights=weights, k=1)[0]
-        return picked
-
-    def average_value(self, new_value):
-        self.visits += 1
-        old_value = self.value
-        self.value = self.value + (Decimal(1) / self.visits) * (
-            Decimal(new_value) - self.value
-        )
-        return abs(self.value - old_value)

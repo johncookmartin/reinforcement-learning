@@ -1,94 +1,62 @@
-import argparse
+from decimal import Decimal
 from random import Random
 
-from util.grid_world import GridWorld
-from util.interfaces import AgentData, GridWorldPayload
+from util.args import setup_grid, get_parser
+from util.grid_agent import GridAgent
 
 
-class EpisodePair:
-    def __init__(self, state, action):
-        self.state = state
-        self.action = action
-
-
-class MCAgent:
-    def __init__(self, world: GridWorld, payload: AgentData):
-        self.world = world
-        self.rng = Random(payload.seed)
-
-        self.max_episode_length = payload.max_episode_length
-        self.terminal_reward = payload.terminal_reward
-        self.discount = payload.discount
-        self.episode = []
-        self.max_delta = 0
+class MCAgent(GridAgent):
+    def average_action_value(self, action, new_value):
+        action.visits += 1
+        old_value = action.value
+        action.value = action.value + (Decimal(1) / action.visits) * (
+            Decimal(new_value) - action.value
+        )
+        return abs(action.value - old_value)
 
     def create_episode(self):
         # initialize first state
         self.episode = []
+        visited = set()
         state = self.rng.choice(self.world.states)
         for _ in range(self.max_episode_length):
             if state.terminal_state:
                 break
-            action = state.choose_action()
-            next_state = action.take_action()
+            action = self.choose_action(state)
+
+            # log first visits
+            pair = (state.index, action.target.index)
+            first_visit = pair not in visited
+
+            # take action and log
+            next_state = self.take_action(action)
             reward = self.terminal_reward if next_state.terminal_state else -1
             self.episode.append(
-                {"state": state, "action": action, "reward": reward, "return": 0}
+                {
+                    "state": state,
+                    "action": action,
+                    "reward": reward,
+                    "first_visit": first_visit,
+                }
             )
             state = next_state
 
     def update_action_values(self):
         g = 0
+        self.max_delta = 0
         for step in reversed(self.episode):
             reward = step["reward"]
             g = reward + self.discount * g
-            step["return"] = g
+            if step["first_visit"]:
+                delta = self.average_action_value(step["action"], g)
+                self.adjust_weights(step["state"])
 
-        visited = set()
-        self.max_delta = 0
-        for step in self.episode:
-            state = step["state"]
-            action = step["action"]
-            pair = (state.index, action.target.index)
-            if pair in visited:
-                continue
-
-            visited.add(pair)
-            g = step["return"]
-            delta = action.average_value(g)
-            state.adjust_weights()
-
-            if delta > self.max_delta:
-                self.max_delta = delta
+                if delta > self.max_delta:
+                    self.max_delta = delta
 
 
 def main(args):
-    # creating the grid structure dynamically based on args
-    payload = GridWorldPayload(
-        args.dimensions,
-        args.accuracy,
-        args.terminal_states,
-        args.wall_column,
-        args.wall_row,
-        args.doors,
-    )
-    grid = GridWorld(payload)
-
-    # this creates the states, joins them together in a graph, and defines the various
-    # actions that can be taken per state
-    agent_data = AgentData(
-        args.p_one,
-        args.p_two,
-        args.discount,
-        args.reward,
-        args.terminal_reward,
-        args.seed,
-        args.max_episode_length,
-        args.epsilon,
-    )
-    grid.create_states(agent_data)
-    grid.join_states()
-    grid.initialize_actions()
+    grid, agent_data = setup_grid(args)
 
     agent = MCAgent(grid, agent_data)
     for _ in range(10000):
@@ -99,22 +67,5 @@ def main(args):
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="Monte Carlo Implementation")
-    parser.add_argument("--dimensions", type=int, default=11)
-    parser.add_argument("--p_one", type=float, default=0.8)
-    parser.add_argument("--p_two", type=float, default=0.1)
-    parser.add_argument("--reward", type=float, default=-1)
-    parser.add_argument("--discount", type=float, default=0.9)
-    parser.add_argument("--accuracy", type=float, default=0.001)
-    parser.add_argument("--terminal_states", type=int, nargs="+", default=[10])
-    parser.add_argument("--terminal_reward", type=float, default=500)
-    parser.add_argument("--wall_column", type=int, default=5)
-    parser.add_argument("--wall_row", type=int, default=55)
-    parser.add_argument("--doors", type=int, nargs="+", default=[27, 57, 63, 93])
-    parser.add_argument("--seed", type=int, default=42)
-    parser.add_argument("--epsilon", type=int, default=0.1)
-
-    parser.add_argument("--max_episode_length", type=int, default=1000)
-
-    args = parser.parse_args()
+    args = get_parser("Monte Carlo Implementation").parse_args()
     main(args)
