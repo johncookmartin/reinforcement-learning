@@ -2,6 +2,10 @@ from decimal import ROUND_HALF_UP, Decimal
 from random import Random
 import time
 
+from colorama import init, Back, Style
+
+init()
+
 from util.grid_world import GridWorld
 from util.interfaces import AgentData
 
@@ -97,6 +101,28 @@ class GridAgent:
             else:
                 state.weights[i] = self.epsilon / len(state.actions)
 
+    def _visit_bg(self, state):
+        visits = sum(a.visits for a in state.actions)
+        all_visits = [
+            sum(a.visits for a in s.actions)
+            for s in self.world.states
+            if s.actions and not s.terminal_state and s.wall_state == "None"
+        ]
+        max_v = max(all_visits) if all_visits else 0
+        if max_v == 0:
+            return Back.BLUE
+        ratio = visits / max_v
+        if ratio > 0.50:
+            return Back.RED
+        elif ratio > 0.25:
+            return Back.YELLOW
+        elif ratio > 0.125:
+            return Back.GREEN
+        elif ratio > 0.0625:
+            return Back.BLUE
+        else:
+            return Back.BLACK
+
     def print_results(self):
         value_cells = []
         for state in self.world.states:
@@ -133,12 +159,15 @@ class GridAgent:
             elif state.wall_state == "ROW_DOOR":
                 print("|    |", end="=")
             elif state.terminal_state:
-                print("[TERM]", end=" ")
+                print(f"{self._visit_bg(state)}[TERM]{Style.RESET_ALL}", end=" ")
             else:
                 actions_str = "".join(
                     [action.action.name[0] for action in state.policy_actions]
                 )
-                print(f"[{actions_str:4}]", end=" ")
+                print(
+                    f"{self._visit_bg(state)}[{actions_str:4}]{Style.RESET_ALL}",
+                    end=" ",
+                )
         print()
         print("VALUES:")
         for i, value_cell in enumerate(value_cells):

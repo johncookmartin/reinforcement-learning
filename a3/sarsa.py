@@ -15,10 +15,8 @@ class SarsaAgent(GridAgent):
 
     def traverse_states(self, state, action):
         not_terminal = True
-        loops = 0
         episode_max_delta = Decimal(0)
-        while not_terminal and loops < self.max_episode_length:
-            loops += 1
+        while not_terminal:
             if state.terminal_state:
                 not_terminal = False
             else:
@@ -49,6 +47,7 @@ class SarsaAgent(GridAgent):
         ) / self.num_of_episodes
 
     def update_action_value(self, action, td_error):
+        action.visits += 1
         old_action_value = action.value
         action.value = action.value + Decimal(self.alpha) * td_error
         return abs(action.value - old_action_value)
