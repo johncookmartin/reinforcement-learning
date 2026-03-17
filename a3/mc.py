@@ -17,6 +17,7 @@ class MCAgent(GridAgent):
     def create_episode(self):
         # initialize first state
         self.episode = []
+        self.num_of_episodes += 1
         visited = set()
         state = self.rng.choice(self.world.states)
         for _ in range(self.max_episode_length):
@@ -25,8 +26,9 @@ class MCAgent(GridAgent):
             action = self.choose_action(state)
 
             # log first visits
-            pair = (state.index, action.target.index)
+            pair = (state.index, action.action)
             first_visit = pair not in visited
+            visited.add(pair)
 
             # take action and log
             next_state = self.take_action(action)
@@ -39,11 +41,12 @@ class MCAgent(GridAgent):
                     "first_visit": first_visit,
                 }
             )
+            self.time_steps += 1
             state = next_state
 
     def update_action_values(self):
         g = 0
-        self.max_delta = 0
+        episode_max_delta = Decimal(0)
         for step in reversed(self.episode):
             reward = step["reward"]
             g = reward + self.discount * g
@@ -51,19 +54,27 @@ class MCAgent(GridAgent):
                 delta = self.average_action_value(step["action"], g)
                 self.adjust_weights(step["state"])
 
-                if delta > self.max_delta:
-                    self.max_delta = delta
+                if delta > episode_max_delta:
+                    episode_max_delta = delta
+
+        self.avg_max_delta += (
+            episode_max_delta - self.avg_max_delta
+        ) / self.num_of_episodes
 
 
 def main(args):
     grid, agent_data = setup_grid(args)
 
     agent = MCAgent(grid, agent_data)
-    for _ in range(10000):
+
+    agent.start_timer()
+    while agent.stable < args.min_episodes:
         agent.create_episode()
         agent.update_action_values()
+        agent.compare_policy()
+    agent.stop_timer()
 
-    grid.print_grid()
+    agent.print_results()
 
 
 if __name__ == "__main__":

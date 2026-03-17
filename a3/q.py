@@ -27,6 +27,7 @@ class QAgent(GridAgent):
     def create_episode(self):
         # initialize first state
         self.episode = []
+        self.num_of_episodes += 1
         state = self.rng.choice(self.world.states)
         self.traverse_states(state)
 
@@ -38,6 +39,7 @@ class QAgent(GridAgent):
             if state.terminal_state:
                 not_terminal = False
             else:
+                self.time_steps += 1
                 action = self.choose_action(state)
                 state_prime = self.take_action(action)
                 if state_prime.terminal_state:
@@ -62,10 +64,14 @@ def main(args):
     grid, agent_data = setup_grid(args)
 
     agent = QAgent(grid, agent_data)
-    for _ in range(10000):
-        agent.create_episode()
 
-    grid.print_grid()
+    agent.start_timer()
+    while agent.stable < args.min_episodes:
+        agent.create_episode()
+        agent.compare_policy()
+    agent.stop_timer()
+
+    agent.print_results()
 
 
 if __name__ == "__main__":
