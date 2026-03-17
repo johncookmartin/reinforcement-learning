@@ -142,7 +142,6 @@ class GridAgent:
             f"GRID {self.world.size}      episodes = {self.num_of_episodes}      steps = {self.time_steps}      time = {self.elapsed}"
         )
         print("-" * 25)
-        print()
         print(
             f"KEY: "
             f"{Back.RED}  {Style.RESET_ALL} >50%  "
