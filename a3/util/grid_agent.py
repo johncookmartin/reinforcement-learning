@@ -178,12 +178,12 @@ class GridAgent:
                     end=" ",
                 )
         print()
-        print("VALUES:")
-        for i, value_cell in enumerate(value_cells):
-            if i % self.world.dimension == 0 and i > 0:
-                print()
-            print(f"{value_cell:>{value_cell_width}}", end=" ")
-        print()
+        # print("VALUES:")
+        # for i, value_cell in enumerate(value_cells):
+        #     if i % self.world.dimension == 0 and i > 0:
+        #         print()
+        #     print(f"{value_cell:>{value_cell_width}}", end=" ")
+        # print()
 
     def start_timer(self):
         self.start = time.time()
