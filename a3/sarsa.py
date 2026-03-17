@@ -62,6 +62,7 @@ def main(args):
     while agent.num_of_episodes < args.max_episodes:
         agent.create_episode()
         agent.compare_policy()
+        agent.adjust_epsilon()
     agent.stop_timer()
 
     agent.print_results()

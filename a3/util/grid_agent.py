@@ -21,9 +21,11 @@ class GridAgent:
         self.discount = payload.discount
         self.p_one = payload.p_one
         self.p_two = payload.p_two
-        self.epsilon = payload.epsilon
+        self.epsilon_start = payload.epsilon
+        self.epsilon = self.epsilon_start
         self.alpha = payload.alpha
         self.weight_init = payload.weight_init
+        self.decay_epsilon = payload.decay_epsilon
 
         self.episode = []
 
@@ -101,6 +103,10 @@ class GridAgent:
             else:
                 state.weights[i] = self.epsilon / len(state.actions)
 
+    def adjust_epsilon(self):
+        if self.decay_epsilon:
+            self.epsilon = self.epsilon_start / self.num_of_episodes
+
     def _visit_bg(self, state):
         visits = sum(a.visits for a in state.actions)
         all_visits = [
@@ -124,20 +130,6 @@ class GridAgent:
             return Back.BLACK
 
     def print_results(self):
-        value_cells = []
-        for state in self.world.states:
-            if "DOOR" in state.wall_state:
-                value_cells.append("DOOR")
-            elif state.wall_state != "None":
-                value_cells.append("WALL")
-            else:
-                indicator = "**" if state.terminal_state else str(state.index)
-                value_cells.append(
-                    f"{indicator}: {state.policy_actions[0].value if state.policy_actions else 0:.2f}"
-                )
-
-        value_cell_width = max(len(cell) for cell in value_cells)
-
         print(
             f"GRID {self.world.size}      episodes = {self.num_of_episodes}      steps = {self.time_steps}      time = {self.elapsed}"
         )
@@ -177,12 +169,6 @@ class GridAgent:
                     end=" ",
                 )
         print()
-        # print("VALUES:")
-        # for i, value_cell in enumerate(value_cells):
-        #     if i % self.world.dimension == 0 and i > 0:
-        #         print()
-        #     print(f"{value_cell:>{value_cell_width}}", end=" ")
-        # print()
 
     def start_timer(self):
         self.start = time.time()

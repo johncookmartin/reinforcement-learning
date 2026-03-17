@@ -26,6 +26,7 @@ def setup_grid(args):
         args.epsilon,
         args.alpha,
         args.weight_init,
+        args.decay_epsilon,
     )
     grid.create_states(agent_data)
     grid.join_states()
@@ -54,5 +55,6 @@ def get_parser(description):
     parser.add_argument("--max_episodes", type=int, default=10000)
     parser.add_argument("--min_episodes", type=int, default=100)
     parser.add_argument("--weight_init", action="store_true", default=False)
+    parser.add_argument("--decay_epsilon", action="store_true", default=False)
 
     return parser

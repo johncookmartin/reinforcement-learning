@@ -73,6 +73,7 @@ def main(args):
         agent.create_episode()
         agent.update_action_values()
         agent.compare_policy()
+        agent.adjust_epsilon()
     agent.stop_timer()
 
     agent.print_results()

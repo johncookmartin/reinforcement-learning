@@ -24,6 +24,7 @@ class AgentData(NamedTuple):
     epsilon: float
     alpha: float
     weight_init: bool
+    decay_epsilon: bool
 
 
 class AdjacentStates(Enum):
