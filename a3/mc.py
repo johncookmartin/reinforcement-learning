@@ -1,5 +1,6 @@
 from decimal import Decimal
 from random import Random
+import time
 
 from util.args import setup_grid, get_parser
 from util.grid_agent import GridAgent
@@ -16,8 +17,7 @@ class MCAgent(GridAgent):
 
     def create_episode(self):
         # initialize first state
-        self.episode = []
-        self.num_of_episodes += 1
+        self.start_episode()
         visited = set()
         # state = self.rng.choice(self.world.states)
         state = self.choose_init_state()
@@ -43,6 +43,7 @@ class MCAgent(GridAgent):
                 }
             )
             self.time_steps += 1
+            self.episode_steps += 1
             state = next_state
 
     def update_action_values(self):
@@ -72,6 +73,7 @@ def main(args):
     while agent.num_of_episodes < args.max_episodes:
         agent.create_episode()
         agent.update_action_values()
+        agent.calculate_episode()
         agent.compare_policy()
         agent.adjust_epsilon()
     agent.stop_timer()

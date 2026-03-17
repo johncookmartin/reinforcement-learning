@@ -30,6 +30,12 @@ class GridAgent:
         self.episode = []
 
         self.avg_max_delta = Decimal(0)
+        self.avg_time = Decimal(0)
+        self.avg_steps = Decimal(0)
+
+        self.episode_start = None
+        self.init_state = None
+
         self.num_of_episodes = 0
         self.time_steps = 0
 
@@ -56,9 +62,11 @@ class GridAgent:
 
     def choose_init_state(self):
         if self.weight_init:
-            return self.choose_weighted_state()
+            state = self.choose_weighted_state()
         else:
-            return self.rng.choice(self.choice_states)
+            state = self.rng.choice(self.choice_states)
+        self.init_state = state
+        return self.init_state
 
     def choose_action(self, state):
         return self.rng.choices(state.actions, state.weights)[0]
@@ -130,19 +138,14 @@ class GridAgent:
             return Back.BLACK
 
     def print_results(self):
+        print()
         print(
-            f"GRID {self.world.size}      episodes = {self.num_of_episodes}      steps = {self.time_steps}      time = {self.elapsed}"
+            f"episodes = {self.num_of_episodes}      steps = {self.time_steps}      time = {self.elapsed}"
         )
-        print("-" * 25)
         print(
-            f"KEY: "
-            f"{Back.RED}  {Style.RESET_ALL} >50%  "
-            f"{Back.YELLOW}  {Style.RESET_ALL} 25-50%  "
-            f"{Back.GREEN}  {Style.RESET_ALL} 12.5-25%  "
-            f"{Back.BLUE}  {Style.RESET_ALL} 6.25-12.5%  "
-            f"{Back.BLACK}  {Style.RESET_ALL} <6.25%  "
-            f"(visit ratio vs max)"
+            f"average step ratio compared to optimal: {self.avg_steps:.4f}      averege episode time: {self.avg_time}"
         )
+        print("-" * 75)
         print("POLICY")
         for i, state in enumerate(self.world.states):
             if i % self.world.dimension == 0 and i > 0:
@@ -169,6 +172,16 @@ class GridAgent:
                     end=" ",
                 )
         print()
+        print()
+        print(
+            f"KEY: "
+            f"{Back.RED}  {Style.RESET_ALL} >50%  "
+            f"{Back.YELLOW}  {Style.RESET_ALL} 25-50%  "
+            f"{Back.GREEN}  {Style.RESET_ALL} 12.5-25%  "
+            f"{Back.BLUE}  {Style.RESET_ALL} 6.25-12.5%  "
+            f"{Back.BLACK}  {Style.RESET_ALL} <6.25%  "
+            f"(visit ratio vs max)"
+        )
 
     def start_timer(self):
         self.start = time.time()
@@ -176,6 +189,31 @@ class GridAgent:
     def stop_timer(self):
         elapsed = time.time() - self.start
         self.elapsed = f"{elapsed:.4f}"
+
+    def start_episode(self):
+        self.episode = []
+        self.num_of_episodes += 1
+        self.episode_start = time.time()
+        self.episode_steps = 0
+        self.init_state = None
+
+    def calculate_episode(self):
+        elapsed_episode = time.time() - self.episode_start
+        if self.avg_time is None:
+            self.avg_time = elapsed_episode
+        else:
+            self.avg_time = (
+                self.avg_time
+                + (Decimal(elapsed_episode) - self.avg_time) / self.num_of_episodes
+            )
+        normalized_steps = self.episode_steps / self.init_state.distance_to_terminal
+        if self.avg_steps is None:
+            self.avg_steps = normalized_steps
+        else:
+            self.avg_steps = (
+                self.avg_steps
+                + (Decimal(normalized_steps) - self.avg_steps) / self.num_of_episodes
+            )
 
     def policy_snapshot(self):
         return frozenset(

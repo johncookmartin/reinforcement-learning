@@ -1,3 +1,4 @@
+from collections import deque
 from decimal import Decimal
 
 from util.interfaces import AdjacentStates, GridWorldPayload
@@ -118,55 +119,26 @@ class GridWorld:
                 else:
                     state.join_states(adjacent_state, None)
 
+    def calculate_distances(self):
+        cardinal = [
+            AdjacentStates.TOP,
+            AdjacentStates.BOTTOM,
+            AdjacentStates.LEFT,
+            AdjacentStates.RIGHT,
+        ]
+        queue = deque()
+        for state in self.states:
+            if state.terminal_state:
+                state.distance_to_terminal = 0
+                queue.append(state)
+        while queue:
+            current = queue.popleft()
+            for direction in cardinal:
+                neighbour = current.neighbours[direction.value]
+                if neighbour is not None and neighbour.distance_to_terminal is None:
+                    neighbour.distance_to_terminal = current.distance_to_terminal + 1
+                    queue.append(neighbour)
+
     def initialize_actions(self):
         for state in self.states:
             state.initialize_actions()
-
-    # print the grid with values and policies
-    def print_grid(self):
-        value_cells = []
-        for state in self.states:
-            if "DOOR" in state.wall_state:
-                value_cells.append("DOOR")
-            elif state.wall_state != "None":
-                value_cells.append("WALL")
-            else:
-                indicator = "**" if state.terminal_state else str(state.index)
-                value_cells.append(
-                    f"{indicator}: {state.policy_actions[0].value if state.policy_actions else 0:.2f}"
-                )
-
-        value_cell_width = max(len(cell) for cell in value_cells)
-
-        print(f"GRID {self.size}      k = {self.k}      i = {self.i}")
-        print("-" * 25)
-        print()
-        print("VALUES:")
-        for i, value_cell in enumerate(value_cells):
-            if i % self.dimension == 0 and i > 0:
-                print()
-            print(f"{value_cell:>{value_cell_width}}", end=" ")
-        print()
-        print("ACTIONS")
-        for i, state in enumerate(self.states):
-            if i % self.dimension == 0 and i > 0:
-                print()
-
-            if state.wall_state == "CROSS":
-                print("||", end="=")
-            elif state.wall_state == "COL":
-                print("||", end=" ")
-            elif state.wall_state == "ROW":
-                print("======", end="=")
-            elif state.wall_state == "COL_DOOR":
-                print("  ", end=" ")
-            elif state.wall_state == "ROW_DOOR":
-                print("|    |", end="=")
-            elif state.terminal_state:
-                print("[TERM]", end=" ")
-            else:
-                actions_str = "".join(
-                    [action.action.name[0] for action in state.policy_actions]
-                )
-                print(f"[{actions_str:4}]", end=" ")
-        print()

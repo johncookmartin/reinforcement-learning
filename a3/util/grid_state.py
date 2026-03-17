@@ -14,6 +14,7 @@ class GridState:
         self.wall_state = wall_state
         self.epsilon = agent_data.epsilon
 
+        self.distance_to_terminal = None
         self.neighbours = [None] * 9
         self.actions = []
         self.policy_actions = []
