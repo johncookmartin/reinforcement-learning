@@ -12,12 +12,14 @@ class GridAgent:
         self.rng = Random(payload.seed)
 
         self.max_episode_length = payload.max_episode_length
+        self.reward = payload.reward
         self.terminal_reward = payload.terminal_reward
         self.discount = payload.discount
         self.p_one = payload.p_one
         self.p_two = payload.p_two
         self.epsilon = payload.epsilon
         self.alpha = payload.alpha
+        self.weight_init = payload.weight_init
 
         self.episode = []
 
@@ -30,6 +32,27 @@ class GridAgent:
 
         self.stable = 0
         self.prev_policy = None
+
+        self.choice_states = []
+        for s in self.world.states:
+            if not s.terminal_state and s.wall_state == "None":
+                self.choice_states.append(s)
+
+    def choose_weighted_state(self):
+        weights = []
+        for s in self.world.states:
+            if s.terminal_state or s.wall_state != "None":
+                weights.append(0)
+            else:
+                total_visits = sum(a.visits for a in s.actions)
+                weights.append(1 / (total_visits + 1))
+        return self.rng.choices(self.world.states, weights=weights)[0]
+
+    def choose_init_state(self):
+        if self.weight_init:
+            return self.choose_weighted_state()
+        else:
+            return self.rng.choice(self.choice_states)
 
     def choose_action(self, state):
         return self.rng.choices(state.actions, state.weights)[0]

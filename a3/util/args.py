@@ -25,6 +25,7 @@ def setup_grid(args):
         args.max_episode_length,
         args.epsilon,
         args.alpha,
+        args.weight_init,
     )
     grid.create_states(agent_data)
     grid.join_states()
@@ -50,6 +51,8 @@ def get_parser(description):
     parser.add_argument("--epsilon", type=float, default=0.1)
     parser.add_argument("--alpha", type=float, default=0.1)
     parser.add_argument("--max_episode_length", type=int, default=1000)
-    parser.add_argument("--max_episodes", type=int, default=100000)
+    parser.add_argument("--max_episodes", type=int, default=10000)
     parser.add_argument("--min_episodes", type=int, default=100)
+    parser.add_argument("--weight_init", action="store_true", default=False)
+
     return parser
