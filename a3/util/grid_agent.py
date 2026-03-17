@@ -143,6 +143,15 @@ class GridAgent:
         )
         print("-" * 25)
         print()
+        print(
+            f"KEY: "
+            f"{Back.RED}  {Style.RESET_ALL} >50%  "
+            f"{Back.YELLOW}  {Style.RESET_ALL} 25-50%  "
+            f"{Back.GREEN}  {Style.RESET_ALL} 12.5-25%  "
+            f"{Back.BLUE}  {Style.RESET_ALL} 6.25-12.5%  "
+            f"{Back.BLACK}  {Style.RESET_ALL} <6.25%  "
+            f"(visit ratio vs max)"
+        )
         print("POLICY")
         for i, state in enumerate(self.world.states):
             if i % self.world.dimension == 0 and i > 0:
