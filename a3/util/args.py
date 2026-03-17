@@ -47,7 +47,7 @@ def get_parser(description):
     parser.add_argument("--wall_column", type=int, default=5)
     parser.add_argument("--wall_row", type=int, default=55)
     parser.add_argument("--doors", type=int, nargs="+", default=[27, 57, 63, 93])
-    parser.add_argument("--seed", type=int, default=42)
+    parser.add_argument("--seed", type=int, default=None)
     parser.add_argument("--epsilon", type=float, default=0.1)
     parser.add_argument("--alpha", type=float, default=0.1)
     parser.add_argument("--max_episode_length", type=int, default=1000)
